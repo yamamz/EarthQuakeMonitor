@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="eathquake_category">
+        <item name="1plus">M1+ Earthquakes</item>
+        <item name="2plus">M2.5+ Earthquakes</item>
+        <item name="4plus">M4.5+ Earthquakes</item>
+        <item name="all">All Earthquakes</item>
+        <item name="significant">Significant Earthquakes</item>
+    </string-array>
+
+    <string-array name="eathquake_category_values">
+        <item name="1plus">one</item>
+        <item name="2plus">two</item>
+        <item name="4plus">four</item>
+        <item name="all">all</item>
+        <item name="significant">significant</item>
+    </string-array>
+
+    <string-array name="time_category">
+        <item name="hour">past hour</item>
+        <item name="day">past day</item>
+        <item name="week">past 1 week</item>
+        <item name="month">past 1 month</item>
+    </string-array>
+
+    <string-array name="time_category_values">
+        <item name="hour">hour</item>
+        <item name="day">day</item>
+        <item name="week">week</item>
+        <item name="month">month</item>
+    </string-array>
+</resources>

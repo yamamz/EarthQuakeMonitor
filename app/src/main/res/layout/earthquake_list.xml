@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-condensed"
+        android:textColor="#ffffff"
+        android:id="@+id/tv_magnitude"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text=""
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="UnusedAttribute" />
+
+    <TextView
+        android:textColor="@color/primary_text"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-condensed"
+        android:id="@+id/tv_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="0dp"
+        android:text="Location"
+        app:layout_constraintStart_toEndOf="@+id/tv_magnitude"
+        app:layout_constraintTop_toTopOf="@+id/tv_magnitude"
+        android:layout_marginLeft="8dp"
+        tools:ignore="UnusedAttribute" />
+
+    <TextView
+        android:textColor="@color/secondary_text"
+        android:textSize="@dimen/text_secondary_size"
+        android:id="@+id/tv_times"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="0dp"
+        android:text="Time"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_magnitude"
+        app:layout_constraintStart_toStartOf="@+id/tv_location" />
+
+    <TextView
+        android:textColor="@color/secondary_text"
+        android:textSize="@dimen/text_secondary_size"
+        android:id="@+id/tv_dept"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="0dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_times"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
+</android.support.constraint.ConstraintLayout>
