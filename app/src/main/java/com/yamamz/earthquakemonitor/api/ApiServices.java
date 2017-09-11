@@ -62,4 +62,8 @@ public interface ApiServices {
     Call<EarthquakeGeoJSon> getEarthQuakesLastmonthSig();
 
 
+
+
+
+
 }

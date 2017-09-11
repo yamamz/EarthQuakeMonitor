@@ -6,5 +6,6 @@
     <dimen name="header_text_size">16sp</dimen>
     <dimen name="custom_icon_image">40dp</dimen>
     <dimen name="custom_profile_padding">8dp</dimen>
+    <dimen name="mi_baseline">16dp</dimen>
 
 </resources>

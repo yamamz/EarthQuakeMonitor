@@ -13,6 +13,8 @@
     <color name="very_strong">#C0CA33</color>
     <color name="violent">#d50000</color>
     <color name="not_felt">#80DEEA</color>
+
+    <color name="black_overlay">#66000000</color>
 </resources>
 
 

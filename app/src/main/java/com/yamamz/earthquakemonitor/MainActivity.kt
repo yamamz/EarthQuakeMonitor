@@ -2,30 +2,43 @@ package com.yamamz.earthquakemonitor
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.location.Location
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Handler
-import android.os.HandlerThread
+import android.os.Looper
+
 import android.preference.PreferenceManager
+import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.DefaultItemAnimator
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+
 import android.widget.Toast
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.clustering.ClusterManager
+
 import com.yamamz.earthquakemonitor.adapter.QuakeAdapter
 import com.yamamz.earthquakemonitor.api.ApiServices
 import com.yamamz.earthquakemonitor.model.*
+import com.yamamz.earthquakemonitor.service.AlarmReceiver
+import com.yamamz.earthquakemonitor.service.NotificationReceiver
+
 import com.yamamz.earthquakemonitor.ui.DeviderItemDecoration
 import com.yamamz.earthquakemonitor.view.Settings
 import io.realm.Realm
+import io.realm.RealmConfiguration
 import io.realm.RealmResults
+import kotlinx.android.synthetic.main.activity_details_map_activity2.*
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
@@ -34,35 +47,40 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.text.DecimalFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity() {
-
  var earthQuakes: ArrayList<Feature>?=null
     val earthQuakelist=ArrayList<EarthQuake>()
-    var earthquaketoPass=ArrayList<MyItem>()
 
+var pendingIntent:PendingIntent?=null
+    var pendingNotificationIntent:PendingIntent?=null
     var mAdapter: QuakeAdapter?=null
     var realm:Realm?=null
     var realmResult:RealmResults<EarthquakeRealmModel>?=null
-
-
-
-
+    var manager:AlarmManager? = null
+    var alarmIntent:Intent?=null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
-        Realm.init(this)
         realm = Realm.getDefaultInstance()
 
-        fab.setOnClickListener {
+    /* Retrieve a PendingIntent that will perform a broadcast */
+   alarmIntent = Intent(MainActivity@this,AlarmReceiver::class.java)
+        pendingIntent = PendingIntent.getBroadcast(MainActivity@this, 1, alarmIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT)
+        val notificationIntent= Intent(MainActivity@this,NotificationReceiver::class.java)
+        pendingNotificationIntent = PendingIntent.getBroadcast(MainActivity@this, 2, notificationIntent,  PendingIntent.FLAG_UPDATE_CURRENT)
 
+        start()
+        startNotification()
+        fab.setOnClickListener {
             val intent = Intent(this, AllEarthquakeActivity::class.java)
             startActivity(intent)
-
         }
 
 
@@ -88,43 +106,158 @@ class MainActivity : AppCompatActivity() {
         }
 }
 
+        onNewIntent(intent)
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mMessageReceiver, IntentFilter("updaterecyclerView"))
+    }
+
+
+    override public fun onNewIntent(intent:Intent ) {
+        val extras = intent.extras
+        if (extras != null) {
+
+            val msg = extras.getString("id")
+
+            toast(msg)
+        }
+
+        }
+    private fun start() {
+        manager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+       val interval:Long = 60000
+
+        manager?.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), interval, pendingIntent)
 
     }
 
+    private fun startNotification() {
+        val manager:AlarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val interval:Long = 60000
+
+        manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), interval, pendingNotificationIntent)
+
+    }
+
+
+
     private fun loadLocalDb(){
 
+        try {
             realm!!.executeTransactionAsync(object : Realm.Transaction {
+
                 override fun execute(realm: Realm?) {
 
-                    realmResult=realm!!.where(EarthquakeRealmModel::class.java).findAll()
-                    for(i in 0 until realmResult!!.size){
+                    realmResult = realm!!.where(EarthquakeRealmModel::class.java).findAll()
+                    Log.e("Yamamz", "Load data successfully ${realmResult!!.size} ")
+
+                    for (i in 0 until realmResult!!.size) {
                         val now = Date()
                         val past = convertTime(realmResult!![i].dateOccur!!)
                         val timeAgo = timeAgo(past, now)
-                        val earthquake=EarthQuake(realmResult!![i].mag!!, realmResult!![i].location!!,
-                                timeAgo, realmResult!![i].dept!!)
+                        val earthquake = EarthQuake(realmResult!![i].mag!!, realmResult!![i].location!!, timeAgo, realmResult!![i].dept!!)
                         earthQuakelist.add(earthquake)
                     }
 
                 }
 
             }, Realm.Transaction.OnSuccess {
+
                 mAdapter!!.notifyDataSetChanged()
 
-                if(earthQuakelist.size<=0) {
-                    getQuakes()
+                if (earthQuakelist.size <= 0) {
 
+                    if (isNetworkAvailable()) {
+
+                        pbLoading.visibility = View.VISIBLE
+                        getQuakes()
+                    }
                 }
             })
 
+        }
+        catch (e:Exception){
+        }
+    }
+
+
+    private fun loaddata(){
+
+        try {
+            realm!!.executeTransactionAsync(object : Realm.Transaction {
+
+                override fun execute(realm: Realm?) {
+
+                    realmResult = realm!!.where(EarthquakeRealmModel::class.java).findAll()
+                    val handler = Handler(Looper.getMainLooper())
+                    handler.post {
+                        mAdapter!!.clear()
+                        Log.e("yamamz","adapter clear")
+                    }
 
 
 
+                    if(realmResult!!.size>0) {
+                        Log.e("Yamamz", "Load data successfully ${realmResult!!.size} ")
 
+                        for (i in 0 until realmResult!!.size) {
+                            val now = Date()
+                            val past = convertTime(realmResult!![i].dateOccur!!)
+                            val timeAgo = timeAgo(past, now)
+                            val earthquake = EarthQuake(realmResult!![i].mag!!, realmResult!![i].location!!, timeAgo, realmResult!![i].dept!!)
+                            earthQuakelist.add(earthquake)
+                        }
+                    }
+                }
+
+            }, Realm.Transaction.OnSuccess {
+
+                mAdapter!!.notifyDataSetChanged()
+
+            })
+
+        }
+        catch (e:Exception){
+        }
+    }
+
+
+    private fun checkRecyclerViewIsemplty() {
+        if (mAdapter!!.itemCount == 0) {
+            empty.visibility = View.VISIBLE
+        } else {
+
+            empty.visibility = View.GONE
+        }
 
 
     }
+
+    private fun checkAdapter() {
+        mAdapter!!.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            override fun onChanged() {
+                super.onChanged()
+                checkRecyclerViewIsemplty()
+            }
+
+            override fun onItemRangeChanged(positionStart: Int, itemCount: Int) {
+                super.onItemRangeChanged(positionStart, itemCount)
+                checkRecyclerViewIsemplty()
+            }
+
+            override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
+                super.onItemRangeRemoved(positionStart, itemCount)
+                checkRecyclerViewIsemplty()
+            }
+
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                super.onItemRangeInserted(positionStart, itemCount)
+                checkRecyclerViewIsemplty()
+            }
+        })
+
+    }
+
 
     private fun getQuakesOnRefresh(){
         val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this@MainActivity)
@@ -215,7 +348,7 @@ class MainActivity : AppCompatActivity() {
                 if(earthQuakes!!.isNotEmpty()){
                     mAdapter!!.clear()
 
-
+                    pbLoading.visibility=View.GONE
                     swipeContainer.isRefreshing = false
                     val realm = Realm.getDefaultInstance()
 
@@ -226,7 +359,6 @@ class MainActivity : AppCompatActivity() {
         }
 
     }, Realm.Transaction.OnSuccess {
-        toast("not close")
         addEarthquakes()
         realm.close()
     })
@@ -234,7 +366,7 @@ class MainActivity : AppCompatActivity() {
 
 
                 val handler=Handler()
-                    handler.post(Runnable {
+                    handler.post({
                         for(i in 0 until earthQuakes!!.size) {
                             val now = Date()
                             val past = convertTime(earthQuakes!![i].properties!!.time!!)
@@ -260,7 +392,27 @@ class MainActivity : AppCompatActivity() {
 
         })
     }
+    private val mMessageReceiver = object : BroadcastReceiver() {
+        @SuppressLint("SetTextI18n")
+        override fun onReceive(contxt: Context?, intent: Intent?) {
+            try {
 
+                if(intent!!.action != null && intent.action == "updaterecyclerView"){
+                    loaddata()
+                    Log.e("yamamz","succesfully loaded the data")
+                }
+
+            } catch (e:Exception){
+
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+
+    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -277,6 +429,17 @@ class MainActivity : AppCompatActivity() {
             val intent= Intent(this@MainActivity, Settings::class.java)
                 startActivity(intent)
             true
+
+
+            }
+
+            R.id.action_search -> {
+
+                if(isNetworkAvailable()) {
+                    pbLoading.visibility = View.VISIBLE
+                    getQuakesOnRefresh()
+                }
+                true
             }
             else -> super.onOptionsItemSelected(item)
         }
@@ -290,6 +453,7 @@ class MainActivity : AppCompatActivity() {
         recyclerView.addItemDecoration(DeviderItemDecoration(this@MainActivity, LinearLayoutManager.VERTICAL))
         recyclerView.itemAnimator = DefaultItemAnimator()
         recyclerView.adapter = mAdapter
+        checkAdapter()
 
     }
 
@@ -385,6 +549,7 @@ var call:Call<EarthquakeGeoJSon>?=null
                 earthQuakes =response?.body()?.features
 
                 if(earthQuakes!!.isNotEmpty()) {
+                    pbLoading.visibility = View.GONE
                     mAdapter!!.clear()
                     val realm = Realm.getDefaultInstance()
                     realm!!.executeTransactionAsync(object : Realm.Transaction {
@@ -400,9 +565,11 @@ var call:Call<EarthquakeGeoJSon>?=null
 
                     val handler=Handler()
 
-                    handler.post(Runnable {for (i in 0 until earthQuakes!!.size) {
+                    handler.post({
 
-                        //val now =convertTime(earthQuakes!![i].properties!!.updated!!)
+                        for (i in 0 until earthQuakes!!.size) {
+
+
                         val now = Date()
                         val past = convertTime(earthQuakes!![i].properties!!.time!!)
                         val timeAgo = timeAgo(past, now)
@@ -430,8 +597,8 @@ fun addEarthquakes(){
             for(i in 0 until earthQuakes!!.size) {
 
                 val earthquakesRealm = EarthquakeRealmModel(earthQuakes!![i].properties!!.place!!, earthQuakes!![i].properties!!.mag, earthQuakes!![i].geometry!!.coordinates!![0], earthQuakes!![i].geometry!!.coordinates!![1],
-                        earthQuakes!![i].properties!!.time, earthQuakes!![i].geometry!!.coordinates!![2])
-realm!!.copyToRealm(earthquakesRealm)
+                        earthQuakes!![i].properties!!.time, earthQuakes!![i].geometry!!.coordinates!![2],earthQuakes!![i].id)
+realm!!.copyToRealmOrUpdate(earthquakesRealm)
             }
         }
 
@@ -489,6 +656,10 @@ realm.close()
     override fun onDestroy() {
         super.onDestroy()
         realm!!.close()
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver)
+
+
             }
 
 

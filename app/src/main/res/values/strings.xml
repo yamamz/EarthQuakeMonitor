@@ -2,9 +2,16 @@
     <string name="app_name">EarthQuake Monitor</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_details_map_activity">details_map_activity</string>
-    <string name="when_occured">When Occured</string>
-    <string name="getting">getting distance form...</string>
+    <string name="when_occured">When Occurred</string>
+    <string name="getting">getting distance..</string>
     <string name="title_activity_main2">All Earthquake</string>
+    <string name="empty_list">Swipe Down To Pull Data</string>
+
+    <string name="title_activity_splah_screen">SplahScreen</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="customnotificationtitle">An Earthquake Occur</string>
+    <string name="geojson_url">https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson</string>
 
 
 </resources>

@@ -21,6 +21,13 @@
             android:entryValues="@array/time_category_values"
             />
 
+        <EditTextPreference
+            android:enabled="false"
+            android:visibility="invisible"
+            android:key="location"
+            />
+
+
     </PreferenceCategory>
 
 

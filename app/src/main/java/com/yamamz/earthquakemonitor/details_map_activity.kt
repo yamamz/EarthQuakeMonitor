@@ -26,6 +26,7 @@ import android.graphics.Canvas
 import android.location.Location
 import android.os.Handler
 import android.os.Looper
+import android.preference.PreferenceManager
 import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
@@ -38,10 +39,10 @@ import java.util.concurrent.TimeUnit
 
 class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
     var mMap: GoogleMap? = null
-    var startingintent: Intent? = null
     var googleApiClient: GoogleApiClient? = null
     val REQUEST_LOCATION = 199
     var success:Boolean?=null
+    var extras:Bundle?=null
     @SuppressLint("SetTextI18n")
     override fun onMapReady(p0: GoogleMap?) {
 
@@ -78,12 +79,12 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
         }
         val df = DecimalFormat("##.###")
 
-        val e = intent.extras["e"].toString()
-        val n = intent.extras["n"].toString()
+        val e = extras!!.getDouble("e").toString()
+        val n = extras!!.getDouble("n").toString()
 
         mMap?.mapType = GoogleMap.MAP_TYPE_NORMAL
         val loc = LatLng(e.toDouble(), n.toDouble())
-        val mag = intent.extras["mag"]
+        val mag = extras!!.getDouble("mag")
 
         val px = resources.getDimensionPixelSize(R.dimen.map_dot_marker_size)
 val mDotMarkerBitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
@@ -121,11 +122,11 @@ handler.post({
 
         if (n.toDouble() < 0) lon = "${df.format(intent.extras["n"])} °W" else lon = "${df.format(intent.extras["n"])} °E"
 
-        tv_depth.text = "${intent.extras["depth"]} km"
-        tv_time.text = convertTime(intent.extras["time"].toString().toLong())
+        tv_depth.text = "${extras!!.getDouble("depth")} km"
+        tv_time.text = convertTime(extras!!.getLong("time").toString().toLong())
         tv_location.text = "$lat , $lon"
-        tv_place.text="${intent.extras["location"]}"
-        tv_mag.text = "${intent.extras["mag"]}"
+        tv_place.text= extras!!.getString("location")
+        tv_mag.text = "${extras!!.getDouble("mag")}"
 
         when (mag.toString().toDouble()) {
             in -1.0..1.99 -> {
@@ -187,14 +188,33 @@ handler.post({
 
             in 8.0..20.0 -> {
                 tv_mag.setBackgroundResource(R.drawable.violent_circle)
-                if (mag.toString().toDouble() >= 9) tv_scale.text = "Did you feel it?  -Devastating" else tv_scale.text = "Did you feel it?  -Very Destructive"
+                if (mag.toString().toDouble() >= 9){ tv_scale.text = "Did you feel it?  -Devastating"
+                     tv_info.text="People are forcibly thrown to ground. " +
+                             "\nMany cry and shake with fear. " +
+                             "\nMost buildings are totally damaged. " +
+                             "\nbridges and elevated concrete structures " +
+                             "\nare toppled or destroyed."
+                }
+
+                else tv_scale.text = "Did you feel it?  -Very Destructive"
+                tv_info.text="People panicky. People find" +
+                        "\nit difficult to stand even outdoors." +
+                        "\nMany well-built buildings are considerably damaged. " +
+                        "\nConcrete dikes and foundation of bridges are" +
+                        "\ndestroyed by ground settling or toppling." +
+                        "\nRailway tracks are bent or broken"
             }
 
         }
 
 
     }
+    override public fun onNewIntent(intent:Intent ) {
+      extras = intent.extras
+        if (extras != null) {
 
+        }
+    }
     @SuppressLint("SimpleDateFormat")
     private fun convertTime(time: Long): String {
         val date = Date(time)
@@ -215,16 +235,13 @@ handler.post({
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        startingintent = intent
+        //startingintent = intent
 
-
+        onNewIntent(intent)
         this.setFinishOnTouchOutside(true)
 
 
         val manager = this@details_map_activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
-
-
         if (!hasGPSDevice(this@details_map_activity)) {
             Toast.makeText(this@details_map_activity, "Gps not Supported", Toast.LENGTH_SHORT).show()
         }
@@ -233,9 +250,17 @@ handler.post({
         tv_distance1.setOnClickListener {
             enableLoc()
         }
+        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val locationFromprefs = sharedPrefs.getString("location", "")
+
+           tv_distance1.text=locationFromprefs
 
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER) && hasGPSDevice(this@details_map_activity)) {
+            if(locationFromprefs=="")
             tv_distance1.text = "Gps not enable click here"
+        }
+        else{
+            tv_distance1.text=locationFromprefs
         }
 
 
@@ -246,9 +271,15 @@ handler.post({
         override fun onReceive(contxt: Context?, intent: Intent?) {
             val location = intent!!.getParcelableExtra<Location>("location")
 
-            val geDistance: Double? = distance(startingintent!!.extras["e"].toString().toDouble(), startingintent!!.extras["n"].toString().toDouble(), location.latitude, location.longitude)
+            val geDistance: Double? = distance(extras!!.getDouble("e").toString().toDouble(), extras!!.getDouble("n").toString().toDouble(), location.latitude, location.longitude)
             val df = DecimalFormat("##.##")
             tv_distance1.text = "${df.format(geDistance)} km"
+
+            val pref=PreferenceManager.getDefaultSharedPreferences(contxt)
+            val editor = pref.edit()
+            editor.putString("location",tv_distance1.text.toString())
+            editor.apply()
+            Log.e("yamamz","Save Successfully")
         }
     }
 
