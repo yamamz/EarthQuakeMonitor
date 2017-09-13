@@ -12,13 +12,16 @@ var realm:Realm?=null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main3)
-       val config = RealmConfiguration.Builder()
-                .deleteRealmIfMigrationNeeded()
-                .build()
+        try {
+            val config = RealmConfiguration.Builder()
+                    .deleteRealmIfMigrationNeeded()
+                    .build()
 
-        realm = Realm.getInstance(config)
-        realm!!.close()
+            realm = Realm.getInstance(config)
+            realm!!.close()
+        }catch (e:Exception){
 
+        }
         Handler().postDelayed(Runnable {
 
             val intent= Intent(SplashActivity@this,MainActivity::class.java)

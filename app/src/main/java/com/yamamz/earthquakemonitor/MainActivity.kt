@@ -182,6 +182,10 @@ var pendingIntent:PendingIntent?=null
         }
     }
 
+ fun loaddataFromdb(){
+
+
+}
 
     private fun loaddata(){
 
