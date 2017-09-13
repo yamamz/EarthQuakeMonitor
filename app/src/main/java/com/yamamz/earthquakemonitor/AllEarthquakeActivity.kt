@@ -1,16 +1,10 @@
 package com.yamamz.earthquakemonitor
 
-import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.MenuItem
 import android.widget.Toast
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -18,24 +12,15 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
-import com.yamamz.earthquakemonitor.model.EarthQuake
-import com.yamamz.earthquakemonitor.model.Feature
 import com.yamamz.earthquakemonitor.model.MyItem
 
 import kotlinx.android.synthetic.main.activity_main2.*
 import org.json.JSONException
-import com.google.android.gms.maps.model.Marker
-import android.view.View
-import android.widget.TextView
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.maps.android.geojson.GeoJsonFeature
 import com.google.maps.android.geojson.GeoJsonLayer
 import com.google.maps.android.geojson.GeoJsonPointStyle
-import com.yamamz.earthquakemonitor.model.EarthquakeRealmModel
 import io.realm.Realm
-import kotlinx.android.synthetic.main.info_window_layout.*
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.IOException
@@ -181,15 +166,6 @@ constructor(context:AllEarthquakeActivity){
         addColorsToMarkers(layer)
         layer.addLayerToMap()
         mMap!!.moveCamera(CameraUpdateFactory.newLatLng(LatLng(31.4118, -103.5355)))
-        // Demonstrate receiving features via GeoJsonLayer clicks.
-//        layer.setOnFeatureClickListener(object : GeoJsonLayer.GeoJsonOnFeatureClickListener {
-//            override fun onFeatureClick(p0: GeoJsonFeature?) {
-//                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//            }
-//
-//
-//
-//        })
 
     }
 
@@ -199,29 +175,7 @@ constructor(context:AllEarthquakeActivity){
         Toast.makeText(this, message, duration).show()
     }
 
-    inner class MyCustomAdapterForItems internal constructor() : GoogleMap.InfoWindowAdapter {
 
-     private val myContentsView: View = layoutInflater.inflate(
-                R.layout.info_window_layout, null)
-
-        override fun getInfoWindow(marker: Marker): View? {
-
-            return null
-        }
-
-        @SuppressLint("SetTextI18n")
-        override fun getInfoContents(marker: Marker): View {
-
-
-            val tvTitle = myContentsView.findViewById<TextView>(R.id.txtTitle)
-            val tvSnippet = myContentsView.findViewById<TextView>(R.id.txtSnippet)
-
-            tvTitle.text = clickedClusterItem!!.getmTitle()
-            tvSnippet.text = "Mag ${clickedClusterItem!!.getmSnippet()}"
-
-            return myContentsView
-        }
-    }
 
     override fun onDestroy() {
         super.onDestroy()

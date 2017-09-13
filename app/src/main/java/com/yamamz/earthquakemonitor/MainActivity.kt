@@ -16,6 +16,7 @@ import android.os.Looper
 
 import android.preference.PreferenceManager
 import android.support.v4.content.LocalBroadcastManager
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.DefaultItemAnimator
 import android.support.v7.widget.LinearLayoutManager
@@ -142,7 +143,7 @@ var pendingIntent:PendingIntent?=null
 
 
     private fun loadLocalDb(){
-
+        val realm = Realm.getDefaultInstance()
         try {
             realm!!.executeTransactionAsync(object : Realm.Transaction {
 
@@ -176,12 +177,17 @@ var pendingIntent:PendingIntent?=null
             })
 
         }
-        catch (e:Exception){
+       finally{
+           realm.close()
         }
     }
 
 
     private fun loaddata(){
+
+            mAdapter!!.clear()
+            Log.e("yamamz","adapter clear")
+
 
         try {
             realm!!.executeTransactionAsync(object : Realm.Transaction {
@@ -189,12 +195,6 @@ var pendingIntent:PendingIntent?=null
                 override fun execute(realm: Realm?) {
 
                     realmResult = realm!!.where(EarthquakeRealmModel::class.java).findAll()
-                    val handler = Handler(Looper.getMainLooper())
-                    handler.post {
-                        mAdapter!!.clear()
-                        Log.e("yamamz","adapter clear")
-                    }
-
 
 
                     if(realmResult!!.size>0) {
@@ -430,9 +430,20 @@ var pendingIntent:PendingIntent?=null
                 startActivity(intent)
             true
 
-
             }
+R.id.action_about -> {
+    val builder = AlertDialog.Builder(this, R.style.MyDialogTheme)
+    val positiveText = getString(android.R.string.ok)
+    builder.setTitle(getString(R.string.dialog_title))
+    builder.setMessage(getString(R.string.dialog_message1))
+    builder.setPositiveButton(positiveText) { _, _ ->
 
+    }
+
+    val dialog = builder.create()
+    dialog.show()
+    return true
+}
             R.id.action_search -> {
 
                 if(isNetworkAvailable()) {

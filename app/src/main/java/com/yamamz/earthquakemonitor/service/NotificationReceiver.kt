@@ -51,17 +51,12 @@ class NotificationReceiver : BroadcastReceiver() {
         try {
             getQuakesOnRefresh(context, intent)
             intentToRepeat = Intent(context, details_map_activity::class.java)
-
-
         }
         catch (ignore:Exception){
-
         }
-
     }
 
     private fun getQuakesOnRefresh(context:Context,intent:Intent){
-
 
         val BASE_URL="https://earthquake.usgs.gov/"
         val retrofit = Retrofit.Builder()
@@ -71,20 +66,18 @@ class NotificationReceiver : BroadcastReceiver() {
         val apiServices = retrofit.create(ApiServices::class.java)
 
 
-        val call = apiServices.earthQuakesLasthourAll
+        val call = apiServices.earthQuakesLastdayAll
 
-        call!!.enqueue(object : Callback<EarthquakeGeoJSon> {
-
+        call.enqueue(object : Callback<EarthquakeGeoJSon> {
             override fun onFailure(call: Call<EarthquakeGeoJSon>?, t: Throwable?) {
 
             }
-
             override fun onResponse(call: Call<EarthquakeGeoJSon>?, response: Response<EarthquakeGeoJSon>?) {
                 earthQuakes =response?.body()?.features
                 metadata=response?.body()?.metadata
 
 
-
+                //query to server successfull with data
                 if(earthQuakes!!.isNotEmpty()){
                     Log.e("YamamzNotification","not empty")
                     setnotify(earthQuakes,context)
@@ -106,17 +99,21 @@ class NotificationReceiver : BroadcastReceiver() {
             override fun execute(realm: Realm?) {
                 val realmResult = realm?.where(Notification::class.java)?.findAll()
                 for (i in 0 until earthQuakes!!.size) {
+                    //loop the result and find if the eathquake id is not in notification
                     if(realmResult!!.none{it.notificationID == earthQuakes[i].id}){
+                        //if earthquake is 6 plus magnitude notify the user
                     if (earthQuakes[i].properties?.mag!! >= 6) {
                         val requestCode = ("someString" + System.currentTimeMillis()).hashCode()
                         val notId: Int = (System.currentTimeMillis()).hashCode() + i
-                        //Also add it to the intent, to make sure system sees it as different/modified
+
+                        //value to pass in activity
                         intentToRepeat!!.putExtra("n", earthQuakes[i].geometry!!.coordinates!![0])
                         intentToRepeat!!.putExtra("e", earthQuakes[i].geometry!!.coordinates!![1])
                         intentToRepeat!!.putExtra("time", earthQuakes[i].properties!!.time)
                         intentToRepeat!!.putExtra("mag", earthQuakes[i].properties!!.mag)
                         intentToRepeat!!.putExtra("depth",  earthQuakes[i].geometry!!.coordinates!![2])
                         intentToRepeat!!.putExtra("location", earthQuakes[i].properties!!.place)
+
                         //set flag to restart/relaunch the app
                         intentToRepeat!!.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                         //Pending intent to handle launch of Activity in intent above
@@ -125,8 +122,10 @@ class NotificationReceiver : BroadcastReceiver() {
                         val repeatedNotification = buildLocalNotification(context, pendingIntent!!, earthQuakes[i].properties!!.mag!!, earthQuakes[i].properties!!.place!!).build()
                         //Send local notification
                         NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
+                        //create notification object
                         val notification = Notification(earthQuakes[i].id.toString())
 
+                        //save the notification object to realm database
                         realm.copyToRealmOrUpdate(notification)
                     }
                     }
@@ -142,8 +141,9 @@ class NotificationReceiver : BroadcastReceiver() {
 
     }
 
-
-
+    /**
+     * Buld notification for earthquakes
+     */
     private fun buildLocalNotification(context: Context, pendingIntent: PendingIntent, mag:Double, place:String): NotificationCompat.Builder {
 
         return NotificationCompat.Builder(context,"channel_id")
@@ -154,9 +154,6 @@ class NotificationReceiver : BroadcastReceiver() {
                 .setContentTitle("Mag-$mag")
                 .setContentInfo(place)
                 .setAutoCancel(true) as NotificationCompat.Builder
-
-
-
     }
 
 

@@ -59,9 +59,9 @@ class DeviceBootReceiver : BroadcastReceiver() {
         val apiServices = retrofit.create(ApiServices::class.java)
 
 
-        val call = apiServices.earthQuakesLasthourAll
+        val call = apiServices.earthQuakesLastdayAll
 
-        call!!.enqueue(object : Callback<EarthquakeGeoJSon> {
+        call.enqueue(object : Callback<EarthquakeGeoJSon> {
 
             override fun onFailure(call: Call<EarthquakeGeoJSon>?, t: Throwable?) {
 

@@ -8,10 +8,16 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 
 class SplashActivity : AppCompatActivity() {
-
+var realm:Realm?=null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main3)
+       val config = RealmConfiguration.Builder()
+                .deleteRealmIfMigrationNeeded()
+                .build()
+
+        realm = Realm.getInstance(config)
+        realm!!.close()
 
         Handler().postDelayed(Runnable {
 
