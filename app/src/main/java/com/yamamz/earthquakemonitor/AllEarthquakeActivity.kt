@@ -21,6 +21,12 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.maps.android.geojson.GeoJsonLayer
 import com.google.maps.android.geojson.GeoJsonPointStyle
 import io.realm.Realm
+import kotlinx.coroutines.experimental.Deferred
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.async
+import org.jetbrains.anko.coroutines.experimental.Ref
+import org.jetbrains.anko.coroutines.experimental.asReference
+import org.jetbrains.anko.coroutines.experimental.bg
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.IOException
@@ -42,7 +48,8 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
         mMap=p0
 
 
-        retrieveFileFromUrl()
+        //retrieveFileFromUrl()
+        loadAndShowData()
 
     }
 
@@ -63,9 +70,52 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
             BitmapDescriptorFactory.HUE_RED
         }
     }
+    fun loadAndShowData() {
+        // Ref<T> uses the WeakReference under the hood
+        val ref: Ref<AllEarthquakeActivity> = this.asReference()
 
+        async(UI) {
+            val data: Deferred<GeoJsonLayer?> = bg{downloadGeoJson(getString(R.string.geojson_url))}
+            // Use ref() instead of this@MyActivity
+            ref().showData(data.await()!!)
+        }
+    }
+    fun showData(data: GeoJsonLayer) {
+        addGeoJsonLayerToMap(data)
+    }
     private fun retrieveFileFromUrl() {
-        DownloadGeoJsonFile(this).execute(getString(R.string.geojson_url))
+       //DownloadGeoJsonFile(this).execute(getString(R.string.geojson_url))
+
+    }
+
+    fun downloadGeoJson(url:String):GeoJsonLayer?{
+        try {
+            // Open a stream from the URL
+            val stream = URL(url).openStream()
+
+
+            val result = StringBuilder()
+            val reader = BufferedReader(InputStreamReader(stream) as Reader?)
+            var line : String?
+            do {
+                line = reader.readLine()
+                if (line == null)
+                    break
+                result.append(line)
+            } while (true)
+            // Close the stream
+            reader.close()
+            stream.close()
+
+            return GeoJsonLayer(mMap, JSONObject(result.toString()))
+
+
+        } catch (e: IOException) {
+            Log.e("Yamamz", "GeoJSON file could not be read")
+        } catch (e: JSONException) {
+            Log.e("yamamz", "GeoJSON file could not be converted to a JSONObject")
+        }
+        return null
     }
 
     private fun addColorsToMarkers(layer: GeoJsonLayer) {

@@ -20,6 +20,8 @@ import com.yamamz.earthquakemonitor.model.Feature
 import com.yamamz.earthquakemonitor.model.Metadata
 import com.yamamz.earthquakemonitor.model.Notification
 import io.realm.Realm
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.async
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -38,7 +40,9 @@ class DeviceBootReceiver : BroadcastReceiver() {
     @SuppressLint("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context, intent: Intent) {
         try {
-            getQuakesOnRefresh(context, intent)
+            async (CommonPool) {
+                getQuakesOnRefresh(context, intent)
+            }
             intentToRepeat = Intent(context, details_map_activity::class.java)
 
         }

@@ -7,7 +7,7 @@
             android:key="earthquake_category"
             android:title="Earthquake Category"
             android:summary="%s"
-            android:defaultValue="all"
+            android:defaultValue="two"
             android:entries="@array/eathquake_category"
             android:entryValues="@array/eathquake_category_values"
             />
