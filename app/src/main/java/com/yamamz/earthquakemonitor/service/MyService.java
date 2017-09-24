@@ -26,8 +26,6 @@ public class MyService extends Service
 
     private class LocationListener implements android.location.LocationListener
     {
-
-
         LocationListener(String provider)
         {
             Log.e(TAG, "LocationListener " + provider);
@@ -146,10 +144,7 @@ public class MyService extends Service
             @Override
             public void run() {
                 intent.putExtra("location", location);
-
                 LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-
-
             }
         });
 

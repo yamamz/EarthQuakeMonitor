@@ -1,6 +1,7 @@
 package com.yamamz.earthquakemonitor
 
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
 import android.app.Activity
 import android.content.*
 import android.support.v7.app.AppCompatActivity
@@ -15,15 +16,12 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import com.google.android.gms.common.api.GoogleApiClient
-import com.google.android.gms.location.LocationSettingsStatusCodes
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.LocationSettingsRequest
-import com.google.android.gms.location.LocationRequest
 import android.location.LocationManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.location.Location
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.preference.PreferenceManager
@@ -31,7 +29,13 @@ import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import android.view.MenuItem
+import android.view.Window
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.*
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
 import com.yamamz.earthquakemonitor.service.MyService
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.android.UI
@@ -80,7 +84,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
                 Log.e("Yamamz", "Style parsing failed.")
             }
         } catch (e: Resources.NotFoundException) {
-            Log.e("yamamz", "Can't find style. Error: ", e);
+            Log.e("yamamz", "Can't find style. Error: ", e)
         }
         val df = DecimalFormat("##.###")
 
@@ -199,13 +203,14 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
-    suspend fun animateMapFlyGotoLoc(loc: LatLng, mDotMarkerBitmap: Bitmap) {
+    @SuppressLint("SetTextI18n")
+    private suspend fun animateMapFlyGotoLoc(loc: LatLng, mDotMarkerBitmap: Bitmap) {
 
         delay(1500)
 
         val position = CameraPosition.Builder()
                 .target(loc) // Sets the new camera position
-                .zoom(4f) // Sets the zoom
+                .zoom(10f) // Sets the zoom
                 .bearing(0f) // Rotate the camera
                 .tilt(30f)// Set the camera tilt
                 .build()// Creates a CameraPosition from the builder
@@ -213,7 +218,24 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
                 .newCameraPosition(position), 2000, null)
 
         mMap?.addMarker(MarkerOptions().anchor(.5f, .5f).icon(BitmapDescriptorFactory.fromBitmap(mDotMarkerBitmap)).position(loc).title(intent.extras["location"].toString()))
+        delay(3000)
+        val manager = this@details_map_activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        if (!hasGPSDevice(this@details_map_activity)) {
+            Toast.makeText(this@details_map_activity, "Gps not Supported", Toast.LENGTH_SHORT).show()
+        }
+        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val locationFromprefs = sharedPrefs.getString("location", "")
 
+        tv_distance1.text = locationFromprefs
+
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER) && hasGPSDevice(this@details_map_activity)) {
+            enableLoc()
+            if (locationFromprefs == "")
+                tv_distance1.text = "Gps not enable"
+        } else {
+            tv_distance1.text = locationFromprefs
+
+        }
 
     }
 
@@ -233,6 +255,9 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.requestFeature(Window.FEATURE_CONTENT_TRANSITIONS)
+        }
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_details_map_activity2)
 
@@ -250,26 +275,9 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
         this.setFinishOnTouchOutside(true)
 
 
-        val manager = this@details_map_activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (!hasGPSDevice(this@details_map_activity)) {
-            Toast.makeText(this@details_map_activity, "Gps not Supported", Toast.LENGTH_SHORT).show()
-        }
+
         startService(Intent(this@details_map_activity, MyService::class.java))
 
-        tv_distance1.setOnClickListener {
-            enableLoc()
-        }
-        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val locationFromprefs = sharedPrefs.getString("location", "")
-
-        tv_distance1.text = locationFromprefs
-
-        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER) && hasGPSDevice(this@details_map_activity)) {
-            if (locationFromprefs == "")
-                tv_distance1.text = "Gps not enable click here"
-        } else {
-            tv_distance1.text = locationFromprefs
-        }
 
 
     }
@@ -352,20 +360,62 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
                     .addLocationRequest(locationRequest)
             builder.setAlwaysShow(true)
 
-            val result = LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build())
-            result.setResultCallback {
-                val status = it.status
-                when (status.statusCode) {
-                    LocationSettingsStatusCodes.RESOLUTION_REQUIRED -> try {
-                        tv_distance1.text = getString(R.string.getting)
-                        // Show the dialog by calling startResolutionForResult(),
-                        // and check the result in onActivityResult().
-                        status.startResolutionForResult(this@details_map_activity, REQUEST_LOCATION)
-                    } catch (e: IntentSender.SendIntentException) {
-                        // Ignore the error.
+
+            val result = LocationServices.getSettingsClient(this).checkLocationSettings(builder.build())
+            result.addOnCompleteListener {
+                try {
+                    val response = result.getResult(ApiException::class.java)
+                    // All location settings are satisfied. The client can initialize location
+                    // requests here.
+
+                } catch (exception:ApiException) {
+                    when(exception.statusCode) {
+                        LocationSettingsStatusCodes.RESOLUTION_REQUIRED ->
+                            // Location settings are not satisfied. But could be fixed by showing the
+                            // user a dialog.
+                            try {
+                                // Cast to a resolvable exception.
+                                val resolvable =  exception as ResolvableApiException
+                                // Show the dialog by calling startResolutionForResult(),
+                                // and check the result in onActivityResult().
+                                resolvable.startResolutionForResult(
+                                        this@details_map_activity,
+                                        REQUEST_LOCATION)
+                            } catch (e: IntentSender.SendIntentException) {
+                                // Ignore the error.
+                            } catch (e:ClassCastException ) {
+                                // Ignore, should be an impossible error.
+                            }
+
+                        LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE ->{
+
+                        }
+                    // Location settings are not satisfied. However, we have no way to fix the
+                    // settings so we won't show the dialog.
                     }
+                }
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        val states = LocationSettingsStates.fromIntent(intent)
+        when(requestCode) {
+            REQUEST_LOCATION ->{
+            when (resultCode) {
+                Activity.RESULT_OK -> {
+
+            }
+
+                Activity.RESULT_CANCELED ->{
+
 
                 }
+            }
+                // The user was asked to change settings, but chose not to
+
             }
         }
     }

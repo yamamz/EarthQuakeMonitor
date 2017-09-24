@@ -53,7 +53,7 @@ class NotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         try {
             async (CommonPool) {
-                getQuakesOnRefresh(context, intent)
+                getQuakesOnRefresh(context)
             }
 
 
@@ -63,7 +63,7 @@ class NotificationReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun getQuakesOnRefresh(context:Context,intent:Intent){
+    private fun getQuakesOnRefresh(context:Context){
 
         val BASE_URL="https://earthquake.usgs.gov/"
         val retrofit = Retrofit.Builder()
@@ -83,11 +83,10 @@ class NotificationReceiver : BroadcastReceiver() {
                 earthQuakes =response?.body()?.features
                 metadata=response?.body()?.metadata
 
-
                 //query to server successfull with data
                 if(earthQuakes!!.isNotEmpty()){
                     Log.e("YamamzNotification","not empty")
-                    setnotify(earthQuakes,context)
+                    setnotify(earthQuakes!!,context)
 
                 }
             }
@@ -97,55 +96,57 @@ class NotificationReceiver : BroadcastReceiver() {
     }
 
 
-    fun setnotify(earthQuakes: ArrayList<Feature>?,context:Context){
+    fun setnotify(earthQuakes: ArrayList<Feature>,context:Context){
+try {
+
+    Realm.init(context)
+    val realm = Realm.getDefaultInstance()
+    realm!!.executeTransactionAsync(object : Realm.Transaction {
+        override fun execute(realm: Realm?) {
+            val realmResult = realm!!.where(Notification::class.java).findAll()
+            val i=0
+            earthQuakes.filter {it.properties!!.mag!=null && it.properties!!.mag!! >= 6}.forEach {e ->
 
 
-        Realm.init(context)
-        val realm = Realm.getDefaultInstance()
-        realm!!.executeTransactionAsync(object :Realm.Transaction{
-            override fun execute(realm: Realm?) {
-                val realmResult = realm?.where(Notification::class.java)?.findAll()
-                for (i in 0 until earthQuakes!!.size) {
                     //loop the result and find if the eathquake id is not in notification
-                    if(realmResult!!.none{it.notificationID == earthQuakes[i].id}){
-                        //if earthquake is 6 plus magnitude notify the user
-                    if (earthQuakes[i].properties?.mag!! >= 2) {
-                        val requestCode = ("someString" + System.currentTimeMillis()).hashCode()
-                        val notId: Int = (System.currentTimeMillis()).hashCode() + i
+                    if (realmResult.none { it.notificationID == e.id }) {
+                            val requestCode = ("someString" + System.currentTimeMillis()).hashCode()
+                            val notId: Int = (System.currentTimeMillis()).hashCode() + i+1
 
-                        //value to pass in activity
-                        intentToRepeat!!.putExtra("n", earthQuakes[i].geometry!!.coordinates!![0])
-                        intentToRepeat!!.putExtra("e", earthQuakes[i].geometry!!.coordinates!![1])
-                        intentToRepeat!!.putExtra("time", earthQuakes[i].properties!!.time)
-                        intentToRepeat!!.putExtra("mag", earthQuakes[i].properties!!.mag)
-                        intentToRepeat!!.putExtra("depth",  earthQuakes[i].geometry!!.coordinates!![2])
-                        intentToRepeat!!.putExtra("location", earthQuakes[i].properties!!.place)
+                            //value to pass in activity
+                            intentToRepeat!!.putExtra("n", e.geometry!!.coordinates!![0])
+                            intentToRepeat!!.putExtra("e", e.geometry!!.coordinates!![1])
+                            intentToRepeat!!.putExtra("time", e.properties!!.time)
+                            intentToRepeat!!.putExtra("mag", e.properties!!.mag)
+                            intentToRepeat!!.putExtra("depth", e.geometry!!.coordinates!![2])
+                            intentToRepeat!!.putExtra("location", e.properties!!.place)
 
-                        //set flag to restart/relaunch the app
-                        intentToRepeat!!.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        //Pending intent to handle launch of Activity in intent above
-                        pendingIntent = PendingIntent.getActivity(context, requestCode, intentToRepeat, PendingIntent.FLAG_UPDATE_CURRENT)
-                        //Build notification
-                        val repeatedNotification = buildLocalNotification(context, pendingIntent!!, earthQuakes[i].properties!!.mag!!, earthQuakes[i].properties!!.place!!).build()
-                        //Send local notification
-                        NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
-                        //create notification object
-                        val notification = Notification(earthQuakes[i].id.toString())
+                            //set flag to restart/relaunch the app
+                            intentToRepeat!!.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            //Pending intent to handle launch of Activity in intent above
+                            pendingIntent = PendingIntent.getActivity(context, requestCode, intentToRepeat, PendingIntent.FLAG_UPDATE_CURRENT)
+                            //Build notification
+                            val repeatedNotification = buildLocalNotification(context, pendingIntent!!, e.properties!!.mag!!, e.properties!!.place!!).build()
+                            //Send local notification
+                            NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
+                            //create notification object
+                            val notification = Notification(e.id.toString())
 
-                        //save the notification object to realm database
-                        realm.copyToRealmOrUpdate(notification)
+                            //save the notification object to realm database
+                            realm.copyToRealmOrUpdate(notification)
+
                     }
-                    }
-                }
 
             }
 
-        },Realm.Transaction.OnSuccess {
+        }
 
-            realm.close()
-        })
+    }, Realm.Transaction.OnSuccess {
 
+        realm.close()
+    })
 
+}catch (e:Exception){}
     }
 
     /**

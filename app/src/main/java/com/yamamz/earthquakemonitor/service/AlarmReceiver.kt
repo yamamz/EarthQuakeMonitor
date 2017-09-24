@@ -177,10 +177,6 @@ catch (ignore:Exception){
                             earthQuakes!![i].id)
                     realm!!.copyToRealmOrUpdate(earthquakesRealm)
 
-
-
-
-
                 }
             }
 

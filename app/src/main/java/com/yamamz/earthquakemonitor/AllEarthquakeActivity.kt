@@ -158,14 +158,10 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
     }
 
 
-    private  class DownloadGeoJsonFile : AsyncTask<String, Void, GeoJsonLayer> {
+    private  class DownloadGeoJsonFile(context: AllEarthquakeActivity) : AsyncTask<String, Void, GeoJsonLayer>() {
 
         private var activityReference: WeakReference<AllEarthquakeActivity>? = null
 
-
-constructor(context:AllEarthquakeActivity){
-    activityReference = WeakReference(context)
-}
 
         override fun doInBackground(vararg params: String): GeoJsonLayer? {
 
@@ -207,6 +203,10 @@ constructor(context:AllEarthquakeActivity){
                 if (activity != null)
                 activity.addGeoJsonLayerToMap(layer)
             }
+        }
+
+        init {
+            activityReference = WeakReference(context)
         }
 
     }

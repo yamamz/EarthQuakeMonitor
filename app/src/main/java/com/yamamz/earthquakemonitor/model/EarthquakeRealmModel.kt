@@ -25,7 +25,7 @@ open class EarthquakeRealmModel : RealmObject {
 
     constructor() {}
 
-    constructor(location: String, mag: Double?, lat: Double?, lon: Double?, dateOccur: Long?, dept: Double?,id:String?) {
+    constructor(location: String?, mag: Double?, lat: Double?, lon: Double?, dateOccur: Long?, dept: Double?,id:String?) {
         this.location = location
         this.mag = mag
         this.lat = lat

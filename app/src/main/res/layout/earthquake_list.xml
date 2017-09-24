@@ -7,8 +7,9 @@
     android:layout_height="wrap_content">
 
     <TextView
+        android:transitionName="magTrans"
         android:textStyle="bold"
-        android:fontFamily="sans-serif-condensed"
+        android:fontFamily="sans-serif-thin"
         android:textColor="#ffffff"
         android:id="@+id/tv_magnitude"
         android:layout_width="40dp"
@@ -25,6 +26,7 @@
         tools:ignore="UnusedAttribute" />
 
     <TextView
+android:transitionName="locTrans"
         android:id="@+id/tv_location"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -40,6 +42,7 @@
         tools:ignore="UnusedAttribute" />
 
     <TextView
+        android:fontFamily="sans-serif-condensed"
         android:id="@+id/tv_times"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -51,6 +54,8 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_location" />
 
     <TextView
+        android:transitionName="deptTrans"
+        android:fontFamily="sans-serif-condensed"
         android:id="@+id/tv_dept"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -61,7 +66,9 @@
         android:textSize="@dimen/text_secondary_size"
         app:layout_constraintBottom_toBottomOf="@+id/tv_times"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/tv_times" />
+        app:layout_constraintTop_toTopOf="@+id/tv_times"
+        android:layout_marginRight="8dp"
+        tools:ignore="UnusedAttribute" />
 
 
 </android.support.constraint.ConstraintLayout>
