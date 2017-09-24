@@ -26,6 +26,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 
 import com.yamamz.earthquakemonitor.MainActivity
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.async
 
 
 class AlarmReceiver : BroadcastReceiver() {
@@ -36,7 +38,9 @@ class AlarmReceiver : BroadcastReceiver() {
     @SuppressLint("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context, intent: Intent) {
 try {
-    getQuakesOnRefresh(context, intent)
+    async (CommonPool) {
+        getQuakesOnRefresh(context, intent)
+    }
     intentToRepeat = Intent(context, MainActivity::class.java)
 
 
@@ -126,7 +130,6 @@ catch (ignore:Exception){
         call!!.enqueue(object : Callback<EarthquakeGeoJSon> {
             override fun onFailure(call: Call<EarthquakeGeoJSon>?, t: Throwable?) {
 
-
             }
 
             override fun onResponse(call: Call<EarthquakeGeoJSon>?, response: Response<EarthquakeGeoJSon>?) {
@@ -135,7 +138,6 @@ catch (ignore:Exception){
 
 
                 if(earthQuakes!!.isNotEmpty()){
-
                     Log.e("Yamamz","the query is successful")
                     Realm.init(context)
                     val realm = Realm.getDefaultInstance()

@@ -43,12 +43,15 @@ import kotlinx.android.synthetic.main.activity_details_map_activity2.*
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.android.UI
+
+
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.text.DecimalFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
@@ -85,10 +88,13 @@ var pendingIntent:PendingIntent?=null
         }
 
 
-
-
        setupRecyclerView()
-        loadLocalDb()
+
+    loadLocalDb()
+
+
+
+
 
     swipeContainer.setOnRefreshListener {
         if(isNetworkAvailable()) {
@@ -143,13 +149,18 @@ var pendingIntent:PendingIntent?=null
 
 
     private fun loadLocalDb(){
+
         val realm = Realm.getDefaultInstance()
         try {
             realm!!.executeTransactionAsync(object : Realm.Transaction {
 
                 override fun execute(realm: Realm?) {
 
-                    realmResult = realm!!.where(EarthquakeRealmModel::class.java).findAll()
+                        realmResult = realm!!.where(EarthquakeRealmModel::class.java).findAll()
+
+
+
+
                     Log.e("Yamamz", "Load data successfully ${realmResult!!.size} ")
 
                     for (i in 0 until realmResult!!.size) {
@@ -169,7 +180,6 @@ var pendingIntent:PendingIntent?=null
                 if (earthQuakelist.size <= 0) {
 
                     if (isNetworkAvailable()) {
-
                         pbLoading.visibility = View.VISIBLE
                         getQuakes()
                     }
@@ -384,18 +394,15 @@ var pendingIntent:PendingIntent?=null
 
                     })
 
-
-
-
                 }
 
-
-
             }
-
-
         })
     }
+
+
+
+
     private val mMessageReceiver = object : BroadcastReceiver() {
         @SuppressLint("SetTextI18n")
         override fun onReceive(contxt: Context?, intent: Intent?) {
@@ -481,7 +488,7 @@ R.id.action_about -> {
     private fun getQuakes(){
 
        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this@MainActivity)
-        val earthquake_category = sharedPrefs.getString("earthquake_category", "all")
+        val earthquake_category = sharedPrefs.getString("earthquake_category", "two")
         val time_category = sharedPrefs.getString("time_category", "day")
 
         val BASE_URL="https://earthquake.usgs.gov/"

@@ -34,6 +34,9 @@ import android.graphics.drawable.Drawable
 import android.support.v7.content.res.AppCompatResources
 import android.widget.RemoteViews
 import com.yamamz.earthquakemonitor.details_map_activity
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.launch
 
 
 /**
@@ -49,7 +52,11 @@ class NotificationReceiver : BroadcastReceiver() {
     @SuppressLint("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context, intent: Intent) {
         try {
-            getQuakesOnRefresh(context, intent)
+            async (CommonPool) {
+                getQuakesOnRefresh(context, intent)
+            }
+
+
             intentToRepeat = Intent(context, details_map_activity::class.java)
         }
         catch (ignore:Exception){
@@ -102,7 +109,7 @@ class NotificationReceiver : BroadcastReceiver() {
                     //loop the result and find if the eathquake id is not in notification
                     if(realmResult!!.none{it.notificationID == earthQuakes[i].id}){
                         //if earthquake is 6 plus magnitude notify the user
-                    if (earthQuakes[i].properties?.mag!! >= 6) {
+                    if (earthQuakes[i].properties?.mag!! >= 2) {
                         val requestCode = ("someString" + System.currentTimeMillis()).hashCode()
                         val notId: Int = (System.currentTimeMillis()).hashCode() + i
 

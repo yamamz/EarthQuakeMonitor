@@ -4,6 +4,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'realm-android'
 
+
 android {
     compileSdkVersion 26
     buildToolsVersion "26.0.0"
@@ -35,6 +36,10 @@ dependencies {
     implementation 'com.google.android.gms:play-services-location:11.2.2'
     implementation 'com.android.support:recyclerview-v7:26.0.2'
     implementation 'com.google.maps.android:android-maps-utils:0.4.4'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
+    implementation "org.jetbrains.anko:anko-coroutines:0.10.1"
+
+
 
     //Json Converter
     //Http Library

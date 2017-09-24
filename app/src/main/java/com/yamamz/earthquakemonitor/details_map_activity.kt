@@ -33,6 +33,11 @@ import android.util.Log
 import android.view.MenuItem
 import com.google.android.gms.maps.model.*
 import com.yamamz.earthquakemonitor.service.MyService
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -41,34 +46,34 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
     var mMap: GoogleMap? = null
     var googleApiClient: GoogleApiClient? = null
     val REQUEST_LOCATION = 199
-    var success:Boolean?=null
-    var extras:Bundle?=null
+    var success: Boolean? = null
+    var extras: Bundle? = null
     @SuppressLint("SetTextI18n")
     override fun onMapReady(p0: GoogleMap?) {
 
         mMap = p0
 
-          try {
+        try {
             // Customise the styling of the base map using a JSON object defined
             // in a raw resource file.
-              val c = Calendar.getInstance()
-              val timeOfDay = c.get(Calendar.HOUR_OF_DAY)
+            val c = Calendar.getInstance()
+            val timeOfDay = c.get(Calendar.HOUR_OF_DAY)
 
-              if (timeOfDay in 0..5) {
-                  success = mMap!!.setMapStyle(
-                          MapStyleOptions.loadRawResourceStyle(
-                                  this, R.raw.style_json))
+            if (timeOfDay in 0..5) {
+                success = mMap!!.setMapStyle(
+                        MapStyleOptions.loadRawResourceStyle(
+                                this, R.raw.style_json))
 
-              } else if (timeOfDay in 6..17) {
-                  success= mMap!!.setMapStyle(
-                          MapStyleOptions.loadRawResourceStyle(
-                                  this, R.raw.style_retro))
+            } else if (timeOfDay in 6..17) {
+                success = mMap!!.setMapStyle(
+                        MapStyleOptions.loadRawResourceStyle(
+                                this, R.raw.style_retro))
 
-              } else if (timeOfDay in 18..23) {
-                  success= mMap!!.setMapStyle(
-                          MapStyleOptions.loadRawResourceStyle(
-                                  this, R.raw.style_json))
-              }
+            } else if (timeOfDay in 18..23) {
+                success = mMap!!.setMapStyle(
+                        MapStyleOptions.loadRawResourceStyle(
+                                this, R.raw.style_json))
+            }
 
 
             if (!success!!) {
@@ -87,32 +92,17 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
         val mag = extras!!.getDouble("mag")
 
         val px = resources.getDimensionPixelSize(R.dimen.map_dot_marker_size)
-val mDotMarkerBitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
-val canvas = Canvas(mDotMarkerBitmap)
-val shape = ContextCompat.getDrawable(this@details_map_activity,R.drawable.map_red_dot)
-shape.setBounds(0, 0, mDotMarkerBitmap.width, mDotMarkerBitmap.height)
+        val mDotMarkerBitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(mDotMarkerBitmap)
+        val shape = ContextCompat.getDrawable(this@details_map_activity, R.drawable.map_red_dot)
+        shape.setBounds(0, 0, mDotMarkerBitmap.width, mDotMarkerBitmap.height)
         shape.draw(canvas)
 
         mMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(51.503186, -0.126446), 0f))
 
-        val scheduler = Executors.newScheduledThreadPool(1)
-
-scheduler.schedule({
-val  handler = Handler(Looper.getMainLooper())
-handler.post({
-    val position = CameraPosition.Builder()
-            .target(loc) // Sets the new camera position
-            .zoom(4f) // Sets the zoom
-            .bearing(0f) // Rotate the camera
-            .tilt(30f)// Set the camera tilt
-            .build()// Creates a CameraPosition from the builder
-    mMap!!.animateCamera(CameraUpdateFactory
-            .newCameraPosition(position),2000,null)
-
-    mMap?.addMarker(MarkerOptions().anchor(.5f, .5f).icon(BitmapDescriptorFactory.fromBitmap(mDotMarkerBitmap)).position(loc).title(intent.extras["location"].toString()))
-    })}, 1, TimeUnit.SECONDS)
-        scheduler.shutdown()
-
+        async(UI) {
+          animateMapFlyGotoLoc(loc,mDotMarkerBitmap)
+        }
 
 
         val lat: String?
@@ -125,7 +115,7 @@ handler.post({
         tv_depth.text = "${extras!!.getDouble("depth")} km"
         tv_time.text = convertTime(extras!!.getLong("time").toString().toLong())
         tv_location.text = "$lat , $lon"
-        tv_place.text= extras!!.getString("location")
+        tv_place.text = extras!!.getString("location")
         tv_mag.text = "${extras!!.getDouble("mag")}"
 
         when (mag.toString().toDouble()) {
@@ -188,16 +178,15 @@ handler.post({
 
             in 8.0..20.0 -> {
                 tv_mag.setBackgroundResource(R.drawable.violent_circle)
-                if (mag.toString().toDouble() >= 9){ tv_scale.text = "Did you feel it?  -Devastating"
-                     tv_info.text="People are forcibly thrown to ground. " +
-                             "\nMany cry and shake with fear. " +
-                             "\nMost buildings are totally damaged. " +
-                             "\nbridges and elevated concrete structures " +
-                             "\nare toppled or destroyed."
-                }
-
-                else tv_scale.text = "Did you feel it?  -Very Destructive"
-                tv_info.text="People panicky. People find" +
+                if (mag.toString().toDouble() >= 9) {
+                    tv_scale.text = "Did you feel it?  -Devastating"
+                    tv_info.text = "People are forcibly thrown to ground. " +
+                            "\nMany cry and shake with fear. " +
+                            "\nMost buildings are totally damaged. " +
+                            "\nbridges and elevated concrete structures " +
+                            "\nare toppled or destroyed."
+                } else tv_scale.text = "Did you feel it?  -Very Destructive"
+                tv_info.text = "People panicky. People find" +
                         "\nit difficult to stand even outdoors." +
                         "\nMany well-built buildings are considerably damaged. " +
                         "\nConcrete dikes and foundation of bridges are" +
@@ -209,12 +198,32 @@ handler.post({
 
 
     }
-    override public fun onNewIntent(intent:Intent ) {
-      extras = intent.extras
+
+    suspend fun animateMapFlyGotoLoc(loc: LatLng, mDotMarkerBitmap: Bitmap) {
+
+        delay(1500)
+
+        val position = CameraPosition.Builder()
+                .target(loc) // Sets the new camera position
+                .zoom(4f) // Sets the zoom
+                .bearing(0f) // Rotate the camera
+                .tilt(30f)// Set the camera tilt
+                .build()// Creates a CameraPosition from the builder
+        mMap!!.animateCamera(CameraUpdateFactory
+                .newCameraPosition(position), 2000, null)
+
+        mMap?.addMarker(MarkerOptions().anchor(.5f, .5f).icon(BitmapDescriptorFactory.fromBitmap(mDotMarkerBitmap)).position(loc).title(intent.extras["location"].toString()))
+
+
+    }
+
+    override public fun onNewIntent(intent: Intent) {
+        extras = intent.extras
         if (extras != null) {
 
         }
     }
+
     @SuppressLint("SimpleDateFormat")
     private fun convertTime(time: Long): String {
         val date = Date(time)
@@ -253,14 +262,13 @@ handler.post({
         val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
         val locationFromprefs = sharedPrefs.getString("location", "")
 
-           tv_distance1.text=locationFromprefs
+        tv_distance1.text = locationFromprefs
 
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER) && hasGPSDevice(this@details_map_activity)) {
-            if(locationFromprefs=="")
-            tv_distance1.text = "Gps not enable click here"
-        }
-        else{
-            tv_distance1.text=locationFromprefs
+            if (locationFromprefs == "")
+                tv_distance1.text = "Gps not enable click here"
+        } else {
+            tv_distance1.text = locationFromprefs
         }
 
 
@@ -275,11 +283,11 @@ handler.post({
             val df = DecimalFormat("##.##")
             tv_distance1.text = "${df.format(geDistance)} km"
 
-            val pref=PreferenceManager.getDefaultSharedPreferences(contxt)
+            val pref = PreferenceManager.getDefaultSharedPreferences(contxt)
             val editor = pref.edit()
-            editor.putString("location",tv_distance1.text.toString())
+            editor.putString("location", tv_distance1.text.toString())
             editor.apply()
-            Log.e("yamamz","Save Successfully")
+            Log.e("yamamz", "Save Successfully")
         }
     }
 
@@ -381,8 +389,6 @@ handler.post({
         }
 
     }
-
-
 
 
 }
