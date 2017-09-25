@@ -18,7 +18,7 @@ var realm:Realm?=null
                     .build()
 
             realm = Realm.getInstance(config)
-            realm!!.close()
+            realm?.close()
         } catch (e:Exception){}
 
         Handler().postDelayed(Runnable {

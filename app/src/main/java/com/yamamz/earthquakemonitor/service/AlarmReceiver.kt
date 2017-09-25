@@ -127,7 +127,7 @@ catch (ignore:Exception){
 
         }
 
-        call!!.enqueue(object : Callback<EarthquakeGeoJSon> {
+        call?.enqueue(object : Callback<EarthquakeGeoJSon> {
             override fun onFailure(call: Call<EarthquakeGeoJSon>?, t: Throwable?) {
 
             }
@@ -137,17 +137,14 @@ catch (ignore:Exception){
 
 
 
-                if(earthQuakes!!.isNotEmpty()){
+                if(earthQuakes?.isNotEmpty()==true){
                     Log.e("Yamamz","the query is successful")
                     Realm.init(context)
                     val realm = Realm.getDefaultInstance()
 
-                    realm!!.executeTransactionAsync(object : Realm.Transaction {
-                        override fun execute(realm: Realm?) {
-                            realm!!.delete(EarthquakeRealmModel::class.java)
-                            Log.e("Yamamz","realm db is clear")
-                        }
-
+                    realm!!.executeTransactionAsync(Realm.Transaction { realmAsync ->
+                        realmAsync.delete(EarthquakeRealmModel::class.java)
+                        Log.e("Yamamz","realm db is clear")
                     }, Realm.Transaction.OnSuccess {
                         addEarthquakes(context)
                         realm.close()
@@ -168,18 +165,15 @@ catch (ignore:Exception){
     fun addEarthquakes(context:Context){
 
         val realm = Realm.getDefaultInstance()
-        realm!!.executeTransactionAsync(object :Realm.Transaction{
-            override fun execute(realm: Realm?) {
-                for(i in 0 until earthQuakes!!.size) {
+        realm!!.executeTransactionAsync(Realm.Transaction { realmAsync ->
+            earthQuakes?.forEach {
 
-                    val earthquakesRealm = EarthquakeRealmModel(earthQuakes!![i].properties!!.place!!, earthQuakes!![i].properties!!.mag, earthQuakes!![i].geometry!!.coordinates!![0], earthQuakes!![i].geometry!!.coordinates!![1],
-                            earthQuakes!![i].properties!!.time, earthQuakes!![i].geometry!!.coordinates!![2],
-                            earthQuakes!![i].id)
-                    realm!!.copyToRealmOrUpdate(earthquakesRealm)
+                val earthquakesRealm = EarthquakeRealmModel(it.properties?.place, it.properties?.mag, it.geometry?.coordinates?.get(0), it.geometry?.coordinates?.get(1),
+                        it.properties?.time, it.geometry?.coordinates?.get(2),
+                        it.id)
+                realmAsync?.copyToRealmOrUpdate(earthquakesRealm)
 
-                }
             }
-
         },Realm.Transaction.OnSuccess {
             Log.e("Yamamz","items successfully add")
             val intent = Intent("updaterecyclerView")

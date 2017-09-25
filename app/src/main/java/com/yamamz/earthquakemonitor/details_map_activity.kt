@@ -64,23 +64,22 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
             val timeOfDay = c.get(Calendar.HOUR_OF_DAY)
 
             if (timeOfDay in 0..5) {
-                success = mMap!!.setMapStyle(
+                success = mMap?.setMapStyle(
                         MapStyleOptions.loadRawResourceStyle(
                                 this, R.raw.style_json))
 
             } else if (timeOfDay in 6..17) {
-                success = mMap!!.setMapStyle(
+                success = mMap?.setMapStyle(
                         MapStyleOptions.loadRawResourceStyle(
                                 this, R.raw.style_retro))
 
             } else if (timeOfDay in 18..23) {
-                success = mMap!!.setMapStyle(
+                success = mMap?.setMapStyle(
                         MapStyleOptions.loadRawResourceStyle(
                                 this, R.raw.style_json))
             }
 
-
-            if (!success!!) {
+            if (success==false) {
                 Log.e("Yamamz", "Style parsing failed.")
             }
         } catch (e: Resources.NotFoundException) {
@@ -88,12 +87,12 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
         }
         val df = DecimalFormat("##.###")
 
-        val e = extras!!.getDouble("e").toString()
-        val n = extras!!.getDouble("n").toString()
+        val e = extras?.getDouble("e").toString()
+        val n = extras?.getDouble("n").toString()
 
         mMap?.mapType = GoogleMap.MAP_TYPE_NORMAL
         val loc = LatLng(e.toDouble(), n.toDouble())
-        val mag = extras!!.getDouble("mag")
+        val mag = extras?.getDouble("mag")
 
         val px = resources.getDimensionPixelSize(R.dimen.map_dot_marker_size)
         val mDotMarkerBitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
@@ -102,7 +101,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
         shape.setBounds(0, 0, mDotMarkerBitmap.width, mDotMarkerBitmap.height)
         shape.draw(canvas)
 
-        mMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(51.503186, -0.126446), 0f))
+        mMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(0.00, 0.00), 0f))
 
         async(UI) {
           animateMapFlyGotoLoc(loc,mDotMarkerBitmap)
@@ -116,15 +115,29 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
 
         if (n.toDouble() < 0) lon = "${df.format(intent.extras["n"])} °W" else lon = "${df.format(intent.extras["n"])} °E"
 
-        tv_depth.text = "${extras!!.getDouble("depth")} km"
-        tv_time.text = convertTime(extras!!.getLong("time").toString().toLong())
+        tv_depth.text = "${extras?.getDouble("depth")} km"
+        tv_time.text = convertTime(extras?.getLong("time").toString().toLong())
         tv_location.text = "$lat , $lon"
-        tv_place.text = extras!!.getString("location")
-        tv_mag.text = "${extras!!.getDouble("mag")}"
+        tv_place.text = extras?.getString("location")
+        tv_mag.text = "${extras?.getDouble("mag")}"
+
+
+        val magnitude=mag.toString().toDouble()
+        when(magnitude){
+
+            in -1.0 .. 1.09 ->  tv_mag.setBackgroundResource(R.drawable.circle)
+
+            in 1.1 .. 2.49 ->  tv_mag.setBackgroundResource(R.drawable.circle_weak)
+
+            in 2.5 .. 4.49 ->  tv_mag.setBackgroundResource(R.drawable.circle_moderate)
+
+            else ->  tv_mag.setBackgroundResource(R.drawable.very_strong_circle)
+
+        }
 
         when (mag.toString().toDouble()) {
             in -1.0..1.99 -> {
-                tv_mag.setBackgroundResource(R.drawable.circle)
+
                 tv_scale.text = "Did you feel it?  -Not Felt"
                 tv_info.text = "Perceptible to people under favorable circumstances. " +
                         "\nDelicately balanced objects are disturbed slightly."
@@ -133,7 +146,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
 
 
             in 2.0..3.99 -> {
-                tv_mag.setBackgroundResource(R.drawable.circle_weak)
+
                 if (mag.toString().toDouble() >= 3) {
                     tv_scale.text = "Did you feel it?  -Weak"
                     tv_info.text = "Felt by many people indoors especially in upper " +
@@ -150,7 +163,6 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             in 4.0..5.99 -> {
-                tv_mag.setBackgroundResource(R.drawable.circle_moderate)
 
                 if (mag.toString().toDouble() >= 5) {
                     tv_scale.text = "Did you feel it?  -Strong"
@@ -164,7 +176,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
                         "\nStrong shaking and rocking felt throughout building."
             }
             in 6.0..7.99 -> {
-                tv_mag.setBackgroundResource(R.drawable.very_strong_circle)
+
                 if (mag.toString().toDouble() >= 7) {
                     tv_scale.text = "Did you feel it?  -Destructive"
                     tv_info.text = "Most people are frightened and run outdoors. " +
@@ -181,7 +193,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             in 8.0..20.0 -> {
-                tv_mag.setBackgroundResource(R.drawable.violent_circle)
+
                 if (mag.toString().toDouble() >= 9) {
                     tv_scale.text = "Did you feel it?  -Devastating"
                     tv_info.text = "People are forcibly thrown to ground. " +
@@ -233,6 +245,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
             if (locationFromprefs == "")
                 tv_distance1.text = "Gps not enable"
         } else {
+
             tv_distance1.text = locationFromprefs
 
         }
@@ -285,9 +298,10 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
     private val mMessageReceiver = object : BroadcastReceiver() {
         @SuppressLint("SetTextI18n")
         override fun onReceive(contxt: Context?, intent: Intent?) {
-            val location = intent!!.getParcelableExtra<Location>("location")
+            val location = intent?.getParcelableExtra<Location>("location")
 
-            val geDistance: Double? = distance(extras!!.getDouble("e").toString().toDouble(), extras!!.getDouble("n").toString().toDouble(), location.latitude, location.longitude)
+            val geDistance: Double? = distance(extras?.getDouble("e").toString().toDouble(),
+                    extras?.getDouble("n").toString().toDouble(), location?.latitude?:0.0, location?.longitude?:0.0)
             val df = DecimalFormat("##.##")
             tv_distance1.text = "${df.format(geDistance)} km"
 

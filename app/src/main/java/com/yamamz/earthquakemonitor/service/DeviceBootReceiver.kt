@@ -77,9 +77,9 @@ class DeviceBootReceiver : BroadcastReceiver() {
 
 
 
-                if(earthQuakes!!.isNotEmpty()){
+                if(earthQuakes?.isNotEmpty()==true){
                     Log.e("YamamzBootNotification","not empty")
-                    setnotify(earthQuakes!!,context)
+                    setnotify(earthQuakes,context)
 
                 }
             }
@@ -88,51 +88,47 @@ class DeviceBootReceiver : BroadcastReceiver() {
         })
     }
 
-    fun setnotify(earthQuakes: ArrayList<Feature>,context:Context){
+    fun setnotify(earthQuakes: ArrayList<Feature>?,context:Context){
         try {
 
             Realm.init(context)
             val realm = Realm.getDefaultInstance()
-            realm!!.executeTransactionAsync(object : Realm.Transaction {
-                override fun execute(realm: Realm?) {
-                    val realmResult = realm!!.where(Notification::class.java).findAll()
-                    val i=0
-                    earthQuakes.filter {it.properties!!.mag!=null && it.properties!!.mag!! >= 6}.forEach {e ->
+            realm?.executeTransactionAsync(Realm.Transaction { realmAsync ->
+                val realmResult = realmAsync?.where(Notification::class.java)?.findAll()
+                val i=0
+                earthQuakes?.filter { it.properties?.mag != null && it.properties?.mag?:0.0 >= 6 }?.forEach { e ->
 
 
-                        //loop the result and find if the eathquake id is not in notification
-                        if (realmResult.none { it.notificationID == e.id }) {
-                            val requestCode = ("someString" + System.currentTimeMillis()).hashCode()
-                            val notId: Int = (System.currentTimeMillis()).hashCode() + i+1
+                    //loop the result and find if the eathquake id is not in notification
+                    if (realmResult?.none { it.notificationID == e.id }==true) {
+                        val requestCode = ("someString" + System.currentTimeMillis()).hashCode()
+                        val notId: Int = (System.currentTimeMillis()).hashCode() + i+1
 
-                            //value to pass in activity
-                            intentToRepeat!!.putExtra("n", e.geometry!!.coordinates!![0])
-                            intentToRepeat!!.putExtra("e", e.geometry!!.coordinates!![1])
-                            intentToRepeat!!.putExtra("time", e.properties!!.time)
-                            intentToRepeat!!.putExtra("mag", e.properties!!.mag)
-                            intentToRepeat!!.putExtra("depth", e.geometry!!.coordinates!![2])
-                            intentToRepeat!!.putExtra("location", e.properties!!.place)
+                        //value to pass in activity
+                        intentToRepeat?.putExtra("n", e.geometry?.coordinates?.get(0))
+                        intentToRepeat?.putExtra("e", e.geometry?.coordinates?.get(1))
+                        intentToRepeat?.putExtra("time", e.properties?.time)
+                        intentToRepeat?.putExtra("mag", e.properties?.mag)
+                        intentToRepeat?.putExtra("depth", e.geometry?.coordinates?.get(2))
+                        intentToRepeat?.putExtra("location", e.properties?.place)
 
-                            //set flag to restart/relaunch the app
-                            intentToRepeat!!.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                            //Pending intent to handle launch of Activity in intent above
-                            pendingIntent = PendingIntent.getActivity(context, requestCode, intentToRepeat, PendingIntent.FLAG_UPDATE_CURRENT)
-                            //Build notification
-                            val repeatedNotification = buildLocalNotification(context, pendingIntent!!, e.properties!!.mag!!, e.properties!!.place!!).build()
-                            //Send local notification
-                            NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
-                            //create notification object
-                            val notification = Notification(e.id.toString())
+                        //set flag to restart/relaunch the app
+                        intentToRepeat?.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        //Pending intent to handle launch of Activity in intent above
+                        pendingIntent = PendingIntent.getActivity(context, requestCode, intentToRepeat, PendingIntent.FLAG_UPDATE_CURRENT)
+                        //Build notification
+                        val repeatedNotification = buildLocalNotification(context, pendingIntent!!, e.properties?.mag?:0.0, e.properties?.place?:"").build()
+                        //Send local notification
+                        NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
+                        //create notification object
+                        val notification = Notification(e.id.toString())
 
-                            //save the notification object to realm database
-                            realm.copyToRealmOrUpdate(notification)
-
-                        }
+                        //save the notification object to realm database
+                        realmAsync.copyToRealmOrUpdate(notification)
 
                     }
 
                 }
-
             }, Realm.Transaction.OnSuccess {
 
                 realm.close()

@@ -38,13 +38,13 @@ object NotificationHelper {
 
     fun cancelAlarmRTC() {
         if (alarmManagerRTC != null) {
-            alarmManagerRTC!!.cancel(alarmIntentRTC)
+            alarmManagerRTC?.cancel(alarmIntentRTC)
         }
     }
 
     fun cancelAlarmElapsed() {
         if (alarmManagerElapsed != null) {
-            alarmManagerElapsed!!.cancel(alarmIntentElapsed)
+            alarmManagerElapsed?.cancel(alarmIntentElapsed)
         }
     }
 

@@ -3,6 +3,8 @@ package com.yamamz.earthquakemonitor.adapter
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.support.v7.content.res.AppCompatResources
 import android.support.v7.widget.RecyclerView
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -49,15 +51,23 @@ class QuakeAdapter(private val context: Context, private val earthquakes: ArrayL
         val mag=magnitude
 
         when(mag){
-            in -1.0 .. 1.99 ->  holder.tv_magnitude.setBackgroundResource(R.drawable.circle)
+            in -1.0 .. 1.09 -> {
+                holder.tv_magnitude.setTextColor(Color.parseColor("#ffffff"))
+                holder.tv_magnitude.setBackgroundResource(R.drawable.circle)}
 
-            in 2.0 .. 3.99 ->  holder.tv_magnitude.setBackgroundResource(R.drawable.circle_weak)
+            in 1.1 .. 2.49 -> {
+                holder.tv_magnitude.setTextColor(Color.parseColor("#ffffff"))
+                holder.tv_magnitude.setBackgroundResource(R.drawable.circle_weak)}
 
-            in 4.0 .. 5.99 ->  holder.tv_magnitude.setBackgroundResource(R.drawable.circle_moderate)
+            in 2.5 .. 4.49 ->{
+                holder.tv_magnitude.setBackgroundResource(R.drawable.circle_moderate)
+                holder.tv_magnitude.setTextColor(Color.parseColor("#000000"))
+            }
 
-            in 6.0 .. 7.99 ->  holder.tv_magnitude.setBackgroundResource(R.drawable.very_strong_circle)
+            else -> {
+                holder.tv_magnitude.setTextColor(Color.parseColor("#ffffff"))
+                holder.tv_magnitude.setBackgroundResource(R.drawable.very_strong_circle)}
 
-            in 8.0 .. 20.0 ->   holder.tv_magnitude.setBackgroundResource(R.drawable.violent_circle)
 
         }
 

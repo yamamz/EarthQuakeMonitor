@@ -160,18 +160,18 @@ var pendingIntent:PendingIntent?=null
 
                 override fun execute(realm: Realm?) {
 
-                        realmResult = realm!!.where(EarthquakeRealmModel::class.java).findAll()
+                        realmResult = realm?.where(EarthquakeRealmModel::class.java)?.findAll()
 
 
 
 
-                    Log.e("Yamamz", "Load data successfully ${realmResult!!.size} ")
+                    Log.e("Yamamz", "Load data successfully ${realmResult?.size} ")
 
-                   realmResult!!.filter{it.mag!=null && it.location!=null && it.dept!=null}.forEach {
+                   realmResult?.filter{it.mag!=null && it.location!=null && it.dept!=null}?.forEach {
                         val now = Date()
-                        val past = convertTime(it.dateOccur!!)
+                        val past = convertTime(it.dateOccur?:0)
                         val timeAgo = timeAgo(past, now)
-                            val earthquake = EarthQuake(it?.mag!!, it.location!!, timeAgo, it.dept!!)
+                            val earthquake = EarthQuake(it?.mag?:0.0, it.location?:"", timeAgo, it.dept?:0.0)
                             earthQuakelist.add(earthquake)
 
                     }
@@ -180,7 +180,7 @@ var pendingIntent:PendingIntent?=null
 
             }, Realm.Transaction.OnSuccess {
 
-                mAdapter!!.notifyDataSetChanged()
+                mAdapter?.notifyDataSetChanged()
 
                 if (earthQuakelist.size <= 0) {
 
@@ -204,7 +204,7 @@ var pendingIntent:PendingIntent?=null
 
     private fun loaddata(){
 
-            mAdapter!!.clear()
+            mAdapter?.clear()
             Log.e("yamamz","adapter clear")
 
 
@@ -217,14 +217,14 @@ var pendingIntent:PendingIntent?=null
 
 
 
-                        Log.e("Yamamz", "Load data successfully ${realmResult!!.size} ")
+                        Log.e("Yamamz", "Load data successfully ${realmResult?.size} ")
 
-                        realmResult!!.filter {it.mag!=null && it.location!=null && it.dept!=null}.forEach {
+                        realmResult?.filter {it.mag!=null && it.location!=null && it.dept!=null}?.forEach {
                             val now = Date()
-                            val past = convertTime(it.dateOccur!!)
+                            val past = convertTime(it.dateOccur?:0)
                             val timeAgo = timeAgo(past, now)
 
-                            val earthquake = EarthQuake(it.mag!!, it.location!!, timeAgo, it.dept!!)
+                            val earthquake = EarthQuake(it.mag?:0.0, it.location?:"", timeAgo, it.dept?:0.0)
                             earthQuakelist.add(earthquake)
                         }
 
@@ -233,7 +233,7 @@ var pendingIntent:PendingIntent?=null
 
             }, Realm.Transaction.OnSuccess {
 
-                mAdapter!!.notifyDataSetChanged()
+                mAdapter?.notifyDataSetChanged()
 
             })
 
@@ -244,7 +244,7 @@ var pendingIntent:PendingIntent?=null
 
 
     private fun checkRecyclerViewIsemplty() {
-        if (mAdapter!!.itemCount == 0) {
+        if (mAdapter?.itemCount == 0) {
             empty.visibility = View.VISIBLE
         } else {
 
@@ -255,7 +255,7 @@ var pendingIntent:PendingIntent?=null
     }
 
     private fun checkAdapter() {
-        mAdapter!!.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+        mAdapter?.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onChanged() {
                 super.onChanged()
                 checkRecyclerViewIsemplty()
@@ -355,7 +355,7 @@ var pendingIntent:PendingIntent?=null
 
         }
 
-        call!!.enqueue(object : Callback<EarthquakeGeoJSon> {
+        call?.enqueue(object : Callback<EarthquakeGeoJSon> {
             override fun onFailure(call: Call<EarthquakeGeoJSon>?, t: Throwable?) {
 
 
@@ -366,8 +366,8 @@ var pendingIntent:PendingIntent?=null
 
 
 
-                if(earthQuakes!!.isNotEmpty()){
-                    mAdapter!!.clear()
+                if(earthQuakes?.isNotEmpty() == true){
+                    mAdapter?.clear()
 
                     pbLoading.visibility=View.GONE
                     swipeContainer.isRefreshing = false
@@ -384,13 +384,13 @@ var pendingIntent:PendingIntent?=null
 
                 val handler=Handler()
                     handler.post({
-                        earthQuakes!!.filter{ it.properties!!.mag!=null}.forEach {
+                        earthQuakes?.filter{ it.properties?.mag!=null}?.forEach {
                             val now = Date()
-                            val past = convertTime(it.properties?.time!!)
+                            val past = convertTime(it.properties?.time?:0)
                             val timeAgo = timeAgo(past, now)
 
-                                val earthQuake = EarthQuake(it.properties?.mag!!, it.properties?.place!!,
-                                        timeAgo, it.geometry?.coordinates!![2])
+                                val earthQuake = EarthQuake(it.properties?.mag?:0.0, it.properties?.place?:"",
+                                        timeAgo, it.geometry?.coordinates?.get(2)?:0.0)
                                 earthQuakelist.add(earthQuake)
                                 mAdapter?.notifyDataSetChanged()
 
@@ -412,7 +412,7 @@ var pendingIntent:PendingIntent?=null
         override fun onReceive(contxt: Context?, intent: Intent?) {
             try {
 
-                if(intent!!.action != null && intent.action == "updaterecyclerView"){
+                if(intent?.action != null && intent.action == "updaterecyclerView"){
                     loaddata()
                     Log.e("yamamz","succesfully loaded the data")
                 }
@@ -576,10 +576,10 @@ var call:Call<EarthquakeGeoJSon>?=null
 
                 if(earthQuakes!!.isNotEmpty()) {
                     pbLoading.visibility = View.GONE
-                    mAdapter!!.clear()
+                    mAdapter?.clear()
                     val realm = Realm.getDefaultInstance()
-                    realm!!.executeTransactionAsync(Realm.Transaction { realmAsync ->
-                        realmAsync!!.delete(EarthquakeRealmModel::class.java) },
+                    realm?.executeTransactionAsync(Realm.Transaction { realmAsync ->
+                        realmAsync?.delete(EarthquakeRealmModel::class.java) },
                             Realm.Transaction.OnSuccess {
                         addEarthquakes()
                         realm.close()
@@ -589,14 +589,14 @@ var call:Call<EarthquakeGeoJSon>?=null
 
                     handler.post({
 
-                        earthQuakes!!.filter{it.properties?.mag!=null}.forEach {
+                        earthQuakes?.filter{it.properties?.mag!=null}?.forEach {
 
 
                         val now = Date()
-                        val past = convertTime(it.properties?.time!!)
+                        val past = convertTime(it.properties?.time?:0)
                         val timeAgo = timeAgo(past, now)
-                        val earthQuake = EarthQuake(it.properties?.mag!!, it.properties?.place!!,
-                                timeAgo, it.geometry?.coordinates!![2])
+                        val earthQuake = EarthQuake(it.properties?.mag?:0.0, it.properties?.place?:"",
+                                timeAgo, it.geometry?.coordinates?.get(2)?:0.0)
                         earthQuakelist.add(earthQuake)
                         mAdapter?.notifyDataSetChanged()
 
@@ -649,14 +649,14 @@ realm.close()
     fun goTodetails(position: Int) {
 
         try {
-            val realmResult = realm!!.where(EarthquakeRealmModel::class.java).findAll()
-            val north = realmResult!![position].lat
-            val east = realmResult[position].lon
-            val time = realmResult[position].dateOccur
-            val mag = realmResult[position].mag
-            val depth = realmResult[position].dept
+            val realmResult = realm?.where(EarthquakeRealmModel::class.java)?.findAll()
+            val north = realmResult?.get(position)?.lat
+            val east = realmResult?.get(position)?.lon
+            val time = realmResult?.get(position)?.dateOccur
+            val mag = realmResult?.get(position)?.mag
+            val depth = realmResult?.get(position)?.dept
 
-            val location = realmResult[position].location
+            val location = realmResult?.get(position)?.location
             val intent = Intent(this, details_map_activity::class.java)
             intent.putExtra("n", north)
             intent.putExtra("e", east)

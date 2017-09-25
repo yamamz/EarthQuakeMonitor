@@ -77,7 +77,7 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
         async(UI) {
             val data: Deferred<GeoJsonLayer?> = bg{downloadGeoJson(getString(R.string.geojson_url))}
             // Use ref() instead of this@MyActivity
-            ref().showData(data.await()!!)
+            data.await()?.let { ref().showData(it) }
         }
     }
     fun showData(data: GeoJsonLayer) {
@@ -183,7 +183,7 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
                 // Close the stream
                 reader.close()
                 stream.close()
-                val activity = activityReference!!.get()
+                val activity = activityReference?.get()
                 if (activity != null)
                 return GeoJsonLayer(activity.mMap, JSONObject(result.toString()))
 
@@ -199,7 +199,7 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
 
         override fun onPostExecute(layer: GeoJsonLayer?) {
             if (layer != null) {
-                val activity = activityReference!!.get()
+                val activity = activityReference?.get()
                 if (activity != null)
                 activity.addGeoJsonLayerToMap(layer)
             }
@@ -215,7 +215,7 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
 
         addColorsToMarkers(layer)
         layer.addLayerToMap()
-        mMap!!.moveCamera(CameraUpdateFactory.newLatLng(LatLng(31.4118, -103.5355)))
+        mMap?.moveCamera(CameraUpdateFactory.newLatLng(LatLng(31.4118, -103.5355)))
 
     }
 
@@ -229,7 +229,7 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
 
     override fun onDestroy() {
         super.onDestroy()
-        realm!!.close()
+        realm?.close()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
