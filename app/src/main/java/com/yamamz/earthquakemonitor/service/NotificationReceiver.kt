@@ -1,6 +1,5 @@
 package com.yamamz.earthquakemonitor.service
 
-import android.R
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -33,6 +32,7 @@ import android.support.v4.content.ContextCompat
 import android.graphics.drawable.Drawable
 import android.support.v7.content.res.AppCompatResources
 import android.widget.RemoteViews
+import com.yamamz.earthquakemonitor.R
 import com.yamamz.earthquakemonitor.details_map_activity
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.async
@@ -105,7 +105,7 @@ try {
         override fun execute(realm: Realm?) {
             val realmResult = realm!!.where(Notification::class.java).findAll()
             val i=0
-            earthQuakes.filter {it.properties!!.mag!=null && it.properties!!.mag!! >= 6}.forEach {e ->
+            earthQuakes.filter {it.properties!!.mag!=null && it.properties!!.mag!! >= 1}.forEach {e ->
 
 
                     //loop the result and find if the eathquake id is not in notification
@@ -156,7 +156,7 @@ try {
 
         return NotificationCompat.Builder(context,"channel_id")
                 .setContentIntent(pendingIntent)
-                .setSmallIcon(R.drawable.ic_menu_mylocation)
+                .setSmallIcon(R.mipmap.iconearth)
                 .setStyle(NotificationCompat.BigTextStyle())
                 .setColorized(true)
                 .setContentTitle("Mag-$mag")

@@ -7,5 +7,6 @@
     <dimen name="custom_icon_image">40dp</dimen>
     <dimen name="custom_profile_padding">8dp</dimen>
     <dimen name="mi_baseline">16dp</dimen>
+    <dimen name="titleNotification">16sp</dimen>
 
 </resources>

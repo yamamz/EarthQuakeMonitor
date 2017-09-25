@@ -75,6 +75,8 @@ var pendingIntent:PendingIntent?=null
         setSupportActionBar(toolbar)
         realm = Realm.getDefaultInstance()
 
+
+
     /* Retrieve a PendingIntent that will perform a broadcast */
    alarmIntent = Intent(MainActivity@this,AlarmReceiver::class.java)
         pendingIntent = PendingIntent.getBroadcast(MainActivity@this, 1, alarmIntent,
