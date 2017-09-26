@@ -373,8 +373,8 @@ var pendingIntent:PendingIntent?=null
                     swipeContainer.isRefreshing = false
                     val realm = Realm.getDefaultInstance()
 
-    realm!!.executeTransactionAsync(Realm.Transaction { realmAsync ->
-        realmAsync!!.delete(EarthquakeRealmModel::class.java) }
+    realm?.executeTransactionAsync(Realm.Transaction { realmAsync ->
+        realmAsync?.delete(EarthquakeRealmModel::class.java) }
             , Realm.Transaction.OnSuccess {
         addEarthquakes()
         realm.close()
@@ -614,7 +614,7 @@ var call:Call<EarthquakeGeoJSon>?=null
 fun addEarthquakes(){
 
     val realm = Realm.getDefaultInstance()
-    realm!!.executeTransactionAsync(Realm.Transaction { realmAsync ->
+    realm?.executeTransactionAsync(Realm.Transaction { realmAsync ->
         earthQuakes?.forEach {
 
             val earthquakesRealm = EarthquakeRealmModel(it.properties?.place, it.properties?.mag, it.geometry?.coordinates?.get(0), it.geometry?.coordinates?.get(1),
@@ -674,7 +674,7 @@ realm.close()
 
     override fun onDestroy() {
         super.onDestroy()
-        realm!!.close()
+        realm?.close()
 
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver)
 
