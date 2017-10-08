@@ -670,7 +670,7 @@ realm.close()
 
     override fun onDestroy() {
         super.onDestroy()
-        realm!!.close()
+        realm?.close()
 
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver)
 
