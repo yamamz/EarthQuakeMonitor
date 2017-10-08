@@ -16,7 +16,7 @@ import android.util.Log;
  * Created by AMRI on 8/26/2017.
  */
 
-public class MyService extends Service
+public class LocationService extends Service
 {
     private static final String TAG = "yamamz";
     private LocationManager mLocationManager = null;

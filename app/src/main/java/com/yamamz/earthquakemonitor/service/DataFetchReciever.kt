@@ -30,7 +30,7 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.async
 
 
-class AlarmReceiver : BroadcastReceiver() {
+class DataFetchReciever : BroadcastReceiver() {
     var earthQuakes: ArrayList<Feature>?=null
     var intentToRepeat:Intent?=null
 
@@ -142,7 +142,7 @@ catch (ignore:Exception){
                     Realm.init(context)
                     val realm = Realm.getDefaultInstance()
 
-                    realm!!.executeTransactionAsync(Realm.Transaction { realmAsync ->
+                    realm?.executeTransactionAsync(Realm.Transaction { realmAsync ->
                         realmAsync.delete(EarthquakeRealmModel::class.java)
                         Log.e("Yamamz","realm db is clear")
                     }, Realm.Transaction.OnSuccess {

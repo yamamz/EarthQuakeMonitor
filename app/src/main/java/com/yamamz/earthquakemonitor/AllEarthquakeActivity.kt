@@ -1,6 +1,7 @@
 package com.yamamz.earthquakemonitor
 
 import android.app.Activity
+import android.content.res.Resources
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -18,6 +19,7 @@ import com.yamamz.earthquakemonitor.model.MyItem
 import kotlinx.android.synthetic.main.activity_main2.*
 import org.json.JSONException
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.geojson.GeoJsonLayer
 import com.google.maps.android.geojson.GeoJsonPointStyle
 import io.realm.Realm
@@ -34,20 +36,45 @@ import java.io.InputStreamReader
 import java.io.Reader
 import java.lang.ref.WeakReference
 import java.net.URL
+import java.util.*
 
 
 class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
-
-    var mClusterManager: ClusterManager<MyItem>? = null
     var mMap:GoogleMap?=null
     var realm: Realm?=null
-    val ArrayItems: ArrayList<MyItem>? = ArrayList()
-    private val mLogTag = "GeoJsonDemo"
-    var clickedClusterItem: MyItem? = null
+    var success: Boolean? = null
+
     override fun onMapReady(p0: GoogleMap?) {
         mMap=p0
 
+        try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            val c = Calendar.getInstance()
+            val timeOfDay = c.get(Calendar.HOUR_OF_DAY)
 
+            if (timeOfDay in 0..5) {
+                success = mMap?.setMapStyle(
+                        MapStyleOptions.loadRawResourceStyle(
+                                this, R.raw.style_json))
+
+            } else if (timeOfDay in 6..17) {
+                success = mMap?.setMapStyle(
+                        MapStyleOptions.loadRawResourceStyle(
+                                this, R.raw.style_retro))
+
+            } else if (timeOfDay in 18..23) {
+                success = mMap?.setMapStyle(
+                        MapStyleOptions.loadRawResourceStyle(
+                                this, R.raw.style_json))
+            }
+
+            if (success==false) {
+                Log.e("Yamamz", "Style parsing failed.")
+            }
+        } catch (e: Resources.NotFoundException) {
+            Log.e("yamamz", "Can't find style. Error: ", e)
+        }
         //retrieveFileFromUrl()
         loadAndShowData()
 
@@ -83,10 +110,10 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
     fun showData(data: GeoJsonLayer) {
         addGeoJsonLayerToMap(data)
     }
-    private fun retrieveFileFromUrl() {
-       //DownloadGeoJsonFile(this).execute(getString(R.string.geojson_url))
-
-    }
+//    private fun retrieveFileFromUrl() {
+//       //DownloadGeoJsonFile(this).execute(getString(R.string.geojson_url))
+//
+//    }
 
     fun downloadGeoJson(url:String):GeoJsonLayer?{
         try {
@@ -108,7 +135,6 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
             stream.close()
 
             return GeoJsonLayer(mMap, JSONObject(result.toString()))
-
 
         } catch (e: IOException) {
             Log.e("Yamamz", "GeoJSON file could not be read")
@@ -158,58 +184,58 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
     }
 
 
-    private  class DownloadGeoJsonFile(context: AllEarthquakeActivity) : AsyncTask<String, Void, GeoJsonLayer>() {
-
-        private var activityReference: WeakReference<AllEarthquakeActivity>? = null
-
-
-        override fun doInBackground(vararg params: String): GeoJsonLayer? {
-
-
-            try {
-                // Open a stream from the URL
-                val stream = URL(params[0]).openStream()
-
-
-                val result = StringBuilder()
-                val reader = BufferedReader(InputStreamReader(stream) as Reader?)
-                var line : String?
-                do {
-                    line = reader.readLine()
-                    if (line == null)
-                        break
-                    result.append(line)
-                } while (true)
-                // Close the stream
-                reader.close()
-                stream.close()
-                val activity = activityReference?.get()
-                if (activity != null)
-                return GeoJsonLayer(activity.mMap, JSONObject(result.toString()))
-
-
-            } catch (e: IOException) {
-                Log.e("Yamamz", "GeoJSON file could not be read")
-            } catch (e: JSONException) {
-                Log.e("yamamz", "GeoJSON file could not be converted to a JSONObject")
-            }
-
-            return null
-        }
-
-        override fun onPostExecute(layer: GeoJsonLayer?) {
-            if (layer != null) {
-                val activity = activityReference?.get()
-                if (activity != null)
-                activity.addGeoJsonLayerToMap(layer)
-            }
-        }
-
-        init {
-            activityReference = WeakReference(context)
-        }
-
-    }
+//    private  class DownloadGeoJsonFile(context: AllEarthquakeActivity) : AsyncTask<String, Void, GeoJsonLayer>() {
+//
+//        private var activityReference: WeakReference<AllEarthquakeActivity>? = null
+//
+//
+//        override fun doInBackground(vararg params: String): GeoJsonLayer? {
+//
+//
+//            try {
+//                // Open a stream from the URL
+//                val stream = URL(params[0]).openStream()
+//
+//
+//                val result = StringBuilder()
+//                val reader = BufferedReader(InputStreamReader(stream) as Reader?)
+//                var line : String?
+//                do {
+//                    line = reader.readLine()
+//                    if (line == null)
+//                        break
+//                    result.append(line)
+//                } while (true)
+//                // Close the stream
+//                reader.close()
+//                stream.close()
+//                val activity = activityReference?.get()
+//                if (activity != null)
+//                return GeoJsonLayer(activity.mMap, JSONObject(result.toString()))
+//
+//
+//            } catch (e: IOException) {
+//                Log.e("Yamamz", "GeoJSON file could not be read")
+//            } catch (e: JSONException) {
+//                Log.e("yamamz", "GeoJSON file could not be converted to a JSONObject")
+//            }
+//
+//            return null
+//        }
+//
+//        override fun onPostExecute(layer: GeoJsonLayer?) {
+//            if (layer != null) {
+//                val activity = activityReference?.get()
+//                if (activity != null)
+//                activity.addGeoJsonLayerToMap(layer)
+//            }
+//        }
+//
+//        init {
+//            activityReference = WeakReference(context)
+//        }
+//
+//    }
 
     private fun addGeoJsonLayerToMap(layer: GeoJsonLayer) {
 

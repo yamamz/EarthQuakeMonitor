@@ -1,7 +1,6 @@
 package com.yamamz.earthquakemonitor
 
 import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.app.Activity
 import android.content.*
 import android.support.v7.app.AppCompatActivity
@@ -22,8 +21,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.location.Location
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.preference.PreferenceManager
 import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
@@ -34,16 +31,10 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.*
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
-import com.yamamz.earthquakemonitor.service.MyService
-import kotlinx.coroutines.experimental.CommonPool
+import com.yamamz.earthquakemonitor.service.LocationService
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 
 class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
@@ -101,7 +92,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
         shape.setBounds(0, 0, mDotMarkerBitmap.width, mDotMarkerBitmap.height)
         shape.draw(canvas)
 
-        mMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(0.00, 0.00), 0f))
+        mMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(0.00, 0.00), 0f))
 
         async(UI) {
           animateMapFlyGotoLoc(loc,mDotMarkerBitmap)
@@ -289,7 +280,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
 
 
 
-        startService(Intent(this@details_map_activity, MyService::class.java))
+        startService(Intent(this@details_map_activity, LocationService::class.java))
 
 
 

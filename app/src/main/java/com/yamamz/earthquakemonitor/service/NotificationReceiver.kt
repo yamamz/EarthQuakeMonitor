@@ -44,119 +44,20 @@ import kotlinx.coroutines.experimental.launch
  */
 
 class NotificationReceiver : BroadcastReceiver() {
-    var earthQuakes: ArrayList<Feature>?=null
     var intentToRepeat:Intent?=null
-    var pendingIntent: PendingIntent?=null
 
-    var metadata:Metadata?=null
     @SuppressLint("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context, intent: Intent) {
         try {
             async (CommonPool) {
-                getQuakesOnRefresh(context)
+                intentToRepeat = Intent(context, details_map_activity::class.java)
+                NotificationHelper.getQuakesOnRefresh(context,intentToRepeat)
             }
 
 
-            intentToRepeat = Intent(context, details_map_activity::class.java)
         }
         catch (ignore:Exception){
         }
-    }
-
-    private fun getQuakesOnRefresh(context:Context){
-
-        val BASE_URL="https://earthquake.usgs.gov/"
-        val retrofit = Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-        val apiServices = retrofit.create(ApiServices::class.java)
-
-
-        val call = apiServices.earthQuakesLastdayAll
-
-        call.enqueue(object : Callback<EarthquakeGeoJSon> {
-            override fun onFailure(call: Call<EarthquakeGeoJSon>?, t: Throwable?) {
-
-            }
-            override fun onResponse(call: Call<EarthquakeGeoJSon>?, response: Response<EarthquakeGeoJSon>?) {
-                earthQuakes =response?.body()?.features
-                metadata=response?.body()?.metadata
-
-                //query to server successfull with data
-                if(earthQuakes?.isNotEmpty()==true){
-                    Log.e("YamamzNotification","not empty")
-                    setnotify(earthQuakes,context)
-
-                }
-            }
-
-
-        })
-    }
-
-
-    fun setnotify(earthQuakes: ArrayList<Feature>?,context:Context){
-try {
-
-    Realm.init(context)
-    val realm = Realm.getDefaultInstance()
-    realm?.executeTransactionAsync(Realm.Transaction { realmAsync ->
-        val realmResult:RealmResults<Notification>? = realmAsync?.where(Notification::class.java)?.findAll()
-        val i=0
-        earthQuakes?.filter {it.properties?.mag!=null && it.properties?.mag?:0.0 >= 6}?.forEach {e ->
-            //loop the result and find if the eathquake id is not in notification
-            if (realmResult?.none { it.notificationID == e.id } == true) {
-                val requestCode = ("someString" + System.currentTimeMillis()).hashCode()
-                val notId: Int = (System.currentTimeMillis()).hashCode() + i+1
-
-                //value to pass in activity
-                intentToRepeat?.putExtra("n", e.geometry?.coordinates?.get(0))
-                intentToRepeat?.putExtra("e", e.geometry?.coordinates?.get(1))
-                intentToRepeat?.putExtra("time", e.properties?.time)
-                intentToRepeat?.putExtra("mag", e.properties?.mag)
-                intentToRepeat?.putExtra("depth", e.geometry?.coordinates?.get(2))
-                intentToRepeat?.putExtra("location", e.properties?.place)
-
-                //set flag to restart/relaunch the app
-                intentToRepeat?.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                //Pending intent to handle launch of Activity in intent above
-                pendingIntent = PendingIntent.getActivity(context, requestCode, intentToRepeat, PendingIntent.FLAG_UPDATE_CURRENT)
-                //Build notification
-                val repeatedNotification = buildLocalNotification(context,
-                        pendingIntent!!, e.properties?.mag?:0.0, e.properties?.place?:"").build()
-                //Send local notification
-                NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
-                //create notification object
-                val notification = Notification(e.id.toString())
-
-                //save the notification object to realm database
-                realmAsync.copyToRealmOrUpdate(notification)
-
-            }
-
-        }
-    }, Realm.Transaction.OnSuccess {
-
-        realm.close()
-    })
-
-}catch (e:Exception){}
-    }
-
-    /**
-     * Buld notification for earthquakes
-     */
-    private fun buildLocalNotification(context: Context, pendingIntent: PendingIntent, mag:Double, place:String): NotificationCompat.Builder {
-
-        return NotificationCompat.Builder(context,"channel_id")
-                .setContentIntent(pendingIntent)
-                .setSmallIcon(R.mipmap.iconearth)
-                .setStyle(NotificationCompat.BigTextStyle())
-                .setColorized(true)
-                .setContentTitle("Mag-$mag")
-                .setContentInfo(place)
-                .setAutoCancel(true) as NotificationCompat.Builder
     }
 
 

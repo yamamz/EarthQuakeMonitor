@@ -33,7 +33,8 @@ import android.widget.Toast
 import com.yamamz.earthquakemonitor.adapter.QuakeAdapter
 import com.yamamz.earthquakemonitor.api.ApiServices
 import com.yamamz.earthquakemonitor.model.*
-import com.yamamz.earthquakemonitor.service.AlarmReceiver
+
+import com.yamamz.earthquakemonitor.service.DataFetchReciever
 import com.yamamz.earthquakemonitor.service.NotificationReceiver
 
 import com.yamamz.earthquakemonitor.ui.DeviderItemDecoration
@@ -47,6 +48,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.android.UI
+import org.jetbrains.anko.coroutines.experimental.bg
 
 
 import retrofit2.Call
@@ -54,6 +56,9 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Socket
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
@@ -75,10 +80,8 @@ var pendingIntent:PendingIntent?=null
         setSupportActionBar(toolbar)
         realm = Realm.getDefaultInstance()
 
-
-
     /* Retrieve a PendingIntent that will perform a broadcast */
-   alarmIntent = Intent(MainActivity@this,AlarmReceiver::class.java)
+   alarmIntent = Intent(MainActivity@this,DataFetchReciever::class.java)
         pendingIntent = PendingIntent.getBroadcast(MainActivity@this, 1, alarmIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT)
         val notificationIntent= Intent(MainActivity@this,NotificationReceiver::class.java)
@@ -182,13 +185,15 @@ var pendingIntent:PendingIntent?=null
 
                 mAdapter?.notifyDataSetChanged()
 
-                if (earthQuakelist.size <= 0) {
+                val internetAvail = bg { internetAvailable("www.google.com", 80) }
 
-                    if (isNetworkAvailable()) {
+                async(UI) {
+                    if (internetAvail.await()) {
                         pbLoading.visibility = View.VISIBLE
                         getQuakes()
                     }
                 }
+
             })
 
         }
@@ -197,11 +202,6 @@ var pendingIntent:PendingIntent?=null
         }
     }
 
- fun loaddataFromdb(){
-
-
-}
-
     private fun loaddata(){
 
             mAdapter?.clear()
@@ -209,7 +209,7 @@ var pendingIntent:PendingIntent?=null
 
 
         try {
-            realm!!.executeTransactionAsync(object : Realm.Transaction {
+            realm?.executeTransactionAsync(object : Realm.Transaction {
 
                 override fun execute(realm: Realm?) {
 
@@ -318,6 +318,8 @@ var pendingIntent:PendingIntent?=null
 
             }
 
+
+
             "four" ->{
 
                 when(time_category){
@@ -373,8 +375,8 @@ var pendingIntent:PendingIntent?=null
                     swipeContainer.isRefreshing = false
                     val realm = Realm.getDefaultInstance()
 
-    realm!!.executeTransactionAsync(Realm.Transaction { realmAsync ->
-        realmAsync!!.delete(EarthquakeRealmModel::class.java) }
+    realm?.executeTransactionAsync(Realm.Transaction { realmAsync ->
+        realmAsync?.delete(EarthquakeRealmModel::class.java) }
             , Realm.Transaction.OnSuccess {
         addEarthquakes()
         realm.close()
@@ -421,12 +423,6 @@ var pendingIntent:PendingIntent?=null
 
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -565,7 +561,7 @@ var call:Call<EarthquakeGeoJSon>?=null
         }
 
 
-        call!!.enqueue(object : Callback<EarthquakeGeoJSon> {
+        call?.enqueue(object : Callback<EarthquakeGeoJSon> {
             override fun onFailure(call: Call<EarthquakeGeoJSon>?, t: Throwable?) {
 
 
@@ -574,7 +570,7 @@ var call:Call<EarthquakeGeoJSon>?=null
             override fun onResponse(call: Call<EarthquakeGeoJSon>?, response: Response<EarthquakeGeoJSon>?) {
                 earthQuakes =response?.body()?.features
 
-                if(earthQuakes!!.isNotEmpty()) {
+                if(earthQuakes?.isNotEmpty()==true) {
                     pbLoading.visibility = View.GONE
                     mAdapter?.clear()
                     val realm = Realm.getDefaultInstance()
@@ -614,7 +610,7 @@ var call:Call<EarthquakeGeoJSon>?=null
 fun addEarthquakes(){
 
     val realm = Realm.getDefaultInstance()
-    realm!!.executeTransactionAsync(Realm.Transaction { realmAsync ->
+    realm?.executeTransactionAsync(Realm.Transaction { realmAsync ->
         earthQuakes?.forEach {
 
             val earthquakesRealm = EarthquakeRealmModel(it.properties?.place, it.properties?.mag, it.geometry?.coordinates?.get(0), it.geometry?.coordinates?.get(1),
@@ -686,6 +682,22 @@ realm.close()
   val connectivityManager =getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     val activeNetworkInfo = connectivityManager.activeNetworkInfo
     return activeNetworkInfo != null && activeNetworkInfo.isConnected
+    }
+
+    fun internetAvailable(host: String, port: Int): Boolean {
+
+
+        try {
+            Socket().use({ socket ->
+                socket.connect(InetSocketAddress(host, port), 2000)
+                return true
+            })
+        } catch (e: IOException) {
+            // Either we have a timeout or unreachable host or failed DNS lookup
+            System.out.println(e)
+            return false
+        }
+
     }
 
 }
