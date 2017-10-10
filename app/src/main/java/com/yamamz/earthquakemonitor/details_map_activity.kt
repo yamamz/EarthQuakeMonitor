@@ -217,7 +217,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
                 .bearing(0f) // Rotate the camera
                 .tilt(30f)// Set the camera tilt
                 .build()// Creates a CameraPosition from the builder
-        mMap!!.animateCamera(CameraUpdateFactory
+        mMap?.animateCamera(CameraUpdateFactory
                 .newCameraPosition(position), 2000, null)
 
         mMap?.addMarker(MarkerOptions().anchor(.5f, .5f).icon(BitmapDescriptorFactory.fromBitmap(mDotMarkerBitmap)).position(loc).title(intent.extras["location"].toString()))
@@ -355,7 +355,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
                         }
                     })
                     .addOnConnectionFailedListener { connectionResult -> Log.d("Location error", "Location error " + connectionResult.errorCode) }.build()
-            googleApiClient!!.connect()
+            googleApiClient?.connect()
 
             val locationRequest = LocationRequest.create()
             locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
