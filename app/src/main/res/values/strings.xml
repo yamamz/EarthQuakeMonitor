@@ -19,7 +19,7 @@
     <string name="view_on_map">View on Map</string>
     <string name="title_location_permission">Location Permission</string>
     <string name="text_location_permission">Needs Permission to Access Location</string>
-    <string name="ok">ok</string>
+
 
 
     <string name="location_unknown">Location unknown</string>
