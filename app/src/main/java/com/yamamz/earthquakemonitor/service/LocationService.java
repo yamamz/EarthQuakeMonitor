@@ -20,8 +20,8 @@ public class LocationService extends Service
 {
     private static final String TAG = "yamamz";
     private LocationManager mLocationManager = null;
-    private static final int LOCATION_INTERVAL = 2000;
-    private static final float LOCATION_DISTANCE = 0f;
+    private static final int LOCATION_INTERVAL = 60000;
+    private static final float LOCATION_DISTANCE = 20f;
     private Location mLastLocation;
 
     private class LocationListener implements android.location.LocationListener

@@ -1,8 +1,10 @@
 package com.yamamz.earthquakemonitor
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.*
+import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
@@ -22,8 +24,10 @@ import android.graphics.Canvas
 import android.location.Location
 import android.os.Build
 import android.preference.PreferenceManager
+import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
+import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.MenuItem
 import android.view.Window
@@ -43,6 +47,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
     val REQUEST_LOCATION = 199
     var success: Boolean? = null
     var extras: Bundle? = null
+    val  MY_PERMISSIONS_REQUEST_LOCATION = 99
     @SuppressLint("SetTextI18n")
     override fun onMapReady(p0: GoogleMap?) {
 
@@ -232,7 +237,17 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
         tv_distance1.text = locationFromprefs
 
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER) && hasGPSDevice(this@details_map_activity)) {
-            enableLoc()
+            if (checkLocationPermission()) {
+                if (ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED) {
+
+                    enableLoc()
+
+                }
+            }
+
+
             if (locationFromprefs == "")
                 tv_distance1.text = "Gps not enable"
         } else {
@@ -289,8 +304,8 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
     private val mMessageReceiver = object : BroadcastReceiver() {
         @SuppressLint("SetTextI18n")
         override fun onReceive(contxt: Context?, intent: Intent?) {
-            val location = intent?.getParcelableExtra<Location>("location")
 
+            val location = intent?.getParcelableExtra<Location>("location")
             val geDistance: Double? = distance(extras?.getDouble("e").toString().toDouble(),
                     extras?.getDouble("n").toString().toDouble(), location?.latitude?:0.0, location?.longitude?:0.0)
             val df = DecimalFormat("##.##")
@@ -324,8 +339,18 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
     override fun onResume() {
         super.onResume()
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, IntentFilter("getlocation"))
+        if (checkLocationPermission()) {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+
+                LocalBroadcastManager.getInstance(this).registerReceiver(
+                        mMessageReceiver, IntentFilter("getlocation"))
+
+
+            }
+        }
+
     }
 
     override fun onDestroy() {
@@ -351,7 +376,7 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
                         }
 
                         override fun onConnectionSuspended(i: Int) {
-                            googleApiClient!!.connect()
+                            googleApiClient?.connect()
                         }
                     })
                     .addOnConnectionFailedListener { connectionResult -> Log.d("Location error", "Location error " + connectionResult.errorCode) }.build()
@@ -445,5 +470,72 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+
+    fun checkLocationPermission():Boolean {
+    if (ContextCompat.checkSelfPermission(this,
+            Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+
+        // Should we show an explanation?
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+            // Show an explanation to the user *asynchronously* -- don't block
+            // this thread waiting for the user's response! After the user
+            // sees the explanation, try again to request the permission.
+           AlertDialog.Builder(this)
+                    .setTitle(R.string.title_location_permission)
+                    .setMessage(R.string.text_location_permission)
+
+                    .setPositiveButton(R.string.ok, { p0, p1 ->
+                        ActivityCompat.requestPermissions(details_map_activity@this,
+                                Array(8){Manifest.permission.ACCESS_FINE_LOCATION},
+                                MY_PERMISSIONS_REQUEST_LOCATION);      })
+                    .create()
+                    .show()
+
+
+        } else {
+            // No explanation needed, we can request the permission.
+            ActivityCompat.requestPermissions(this,
+                    Array(8){Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_LOCATION)
+        }
+        return false
+    } else {
+        return true
+    }
+}
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        when (requestCode) {
+            MY_PERMISSIONS_REQUEST_LOCATION -> {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // location-related task you need to do.
+                    if (ContextCompat.checkSelfPermission(this,
+                            Manifest.permission.ACCESS_FINE_LOCATION)
+                            == PackageManager.PERMISSION_GRANTED) {
+
+                        //Request location updates:
+                        //locationManager.requestLocationUpdates(provider, 400, 1, this);
+                    }
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+
+                }
+                return
+            }
+
+        }
+    }
 
 }

@@ -206,19 +206,13 @@ var pendingIntent:PendingIntent?=null
 
             mAdapter?.clear()
             Log.e("yamamz","adapter clear")
-
-
         try {
             realm?.executeTransactionAsync(object : Realm.Transaction {
 
                 override fun execute(realm: Realm?) {
 
                     realmResult = realm?.where(EarthquakeRealmModel::class.java)?.findAll()
-
-
-
                         Log.e("Yamamz", "Load data successfully ${realmResult?.size} ")
-
                         realmResult?.filter {it.mag!=null && it.location!=null && it.dept!=null}?.forEach {
                             val now = Date()
                             val past = convertTime(it.dateOccur?:0)
@@ -227,12 +221,9 @@ var pendingIntent:PendingIntent?=null
                             val earthquake = EarthQuake(it.mag?:0.0, it.location?:"", timeAgo, it.dept?:0.0)
                             earthQuakelist.add(earthquake)
                         }
-
-
                 }
 
             }, Realm.Transaction.OnSuccess {
-
                 mAdapter?.notifyDataSetChanged()
 
             })
@@ -242,15 +233,12 @@ var pendingIntent:PendingIntent?=null
         }
     }
 
-
     private fun checkRecyclerViewIsemplty() {
         if (mAdapter?.itemCount == 0) {
             empty.visibility = View.VISIBLE
         } else {
-
             empty.visibility = View.GONE
         }
-
 
     }
 
@@ -408,7 +396,17 @@ var pendingIntent:PendingIntent?=null
 
 
 
+fun Realm.inExecuteAsync(func:Realm.()-> Unit){
+try {
+}catch (e:Exception){
+    executeTransactionAsync(func)
 
+}
+    finally {
+        close()
+    }
+
+}
     private val mMessageReceiver = object : BroadcastReceiver() {
         @SuppressLint("SetTextI18n")
         override fun onReceive(contxt: Context?, intent: Intent?) {
