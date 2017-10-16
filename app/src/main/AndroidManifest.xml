@@ -73,6 +73,13 @@
         </intent-filter>
     </receiver>
 
-</application>
+
+        <service
+            android:name=".service.LocationUpdatesService"
+            android:enabled="true"
+            android:exported="true" />
+
+
+    </application>
 
 </manifest>

@@ -147,7 +147,7 @@ object NotificationHelper {
                         pendingIntent = PendingIntent.getActivity(context, requestCode, intentToRepeat, PendingIntent.FLAG_UPDATE_CURRENT)
                         //Build notification
                         val repeatedNotification = buildLocalNotification(context,
-                                pendingIntent as PendingIntent, e.properties?.mag ?: 0.0, e.properties?.place ?: "").build()
+                                pendingIntent!!, e.properties?.mag ?: 0.0, e.properties?.place ?: "").build()
                         //Send local notification
                         NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
                         //create notification object

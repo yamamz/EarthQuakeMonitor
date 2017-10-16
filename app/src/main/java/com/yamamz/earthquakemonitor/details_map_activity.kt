@@ -1,8 +1,10 @@
 package com.yamamz.earthquakemonitor
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.*
+import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
@@ -20,18 +22,26 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.location.Location
+import android.net.Uri
 import android.os.Build
+import android.os.IBinder
 import android.preference.PreferenceManager
+import android.provider.Settings
+import android.support.design.widget.Snackbar
+import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import android.view.MenuItem
+import android.view.View
 import android.view.Window
+import android.widget.Button
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.*
-import com.yamamz.earthquakemonitor.service.LocationService
+
+import com.yamamz.earthquakemonitor.service.LocationUpdatesService
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.delay
@@ -43,7 +53,33 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
     val REQUEST_LOCATION = 199
     var success: Boolean? = null
     var extras: Bundle? = null
+
+
+    // A reference to the service used to get location updates.
+    private var mService: LocationUpdatesService? = null
+
+    // Tracks the bound state of the service.
+    private var mBound = false
+    private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
+
     @SuppressLint("SetTextI18n")
+
+
+    private val mServiceConnection = object : ServiceConnection {
+
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = service as LocationUpdatesService.LocalBinder
+            mService = binder.service
+            mBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            mService = null
+            mBound = false
+        }
+    }
+
+
     override fun onMapReady(p0: GoogleMap?) {
 
         mMap = p0
@@ -206,6 +242,100 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+
+    private fun requestPermissions() {
+        val shouldProvideRationale = ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+
+        // Provide an additional rationale to the user. This would happen if the user denied the
+        // request previously, but didn't check the "Don't ask again" checkbox.
+        if (shouldProvideRationale) {
+            Log.i("YAMAMZ", "Displaying permission rationale to provide additional context.")
+            Snackbar.make(
+                    findViewById(R.id.detail_map),
+                    R.string.permission_rationale,
+                    Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.ok) {
+                        // Request permission
+                        ActivityCompat.requestPermissions(this@details_map_activity,
+                                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                                REQUEST_PERMISSIONS_REQUEST_CODE)
+                    }
+                    .show()
+        } else {
+            Log.i("Yamamz", "Requesting permission")
+            // Request permission. It's possible this can be auto answered if device policy
+            // sets the permission in a given state or the user denied the permission
+            // previously and checked "Never ask again".
+            ActivityCompat.requestPermissions(this@details_map_activity,
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    REQUEST_PERMISSIONS_REQUEST_CODE)
+        }
+    }
+
+    private fun checkPermissions(): Boolean {
+        return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        Log.i("Yamamz", "onRequestPermissionResult")
+        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
+            if (grantResults.isEmpty()) {
+                // If user interaction was interrupted, the permission request is cancelled and you
+                // receive empty arrays.
+                Log.i("Yamamz", "User interaction was cancelled.")
+            } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission was granted.
+                mService?.requestLocationUpdates()
+            } else {
+                // Permission denied.
+               // setButtonsState(false)
+                Snackbar.make(
+                        findViewById(R.id.detail_map),
+                        R.string.permission_denied_explanation,
+                        Snackbar.LENGTH_INDEFINITE)
+                        .setAction(R.string.settings) {
+                            // Build intent that displays the App settings screen.
+                            val intent = Intent()
+                            intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            val uri = Uri.fromParts("package",
+                                    BuildConfig.APPLICATION_ID, null)
+                            intent.data = uri
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            startActivity(intent)
+                        }
+                        .show()
+            }
+        }
+
+
+    }
+
+    private val myReciever =object : BroadcastReceiver() {
+        @SuppressLint("SetTextI18n")
+        override fun onReceive(context: Context, intent: Intent) {
+            val location = intent.getParcelableExtra<Location>(LocationUpdatesService.EXTRA_LOCATION)
+            if (location != null) {
+                Toast.makeText(this@details_map_activity, Utils.getLocationText(location),
+                        Toast.LENGTH_SHORT).show()
+
+
+                val geDistance: Double? = distance(extras?.getDouble("e").toString().toDouble(),
+                        extras?.getDouble("n").toString().toDouble(), location?.latitude?:0.0, location?.longitude?:0.0)
+                val df = DecimalFormat("##.##")
+                tv_distance1.text = "${df.format(geDistance)} km"
+
+                val pref = PreferenceManager.getDefaultSharedPreferences(context)
+                val editor = pref.edit()
+                editor.putString("location", tv_distance1.text.toString())
+                editor.apply()
+                Log.e("yamamz", "Save Successfully")
+            }
+        }
+    }
+
     @SuppressLint("SetTextI18n")
     private suspend fun animateMapFlyGotoLoc(loc: LatLng, mDotMarkerBitmap: Bitmap) {
 
@@ -232,12 +362,26 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
         tv_distance1.text = locationFromprefs
 
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER) && hasGPSDevice(this@details_map_activity)) {
-            enableLoc()
-            if (locationFromprefs == "")
-                tv_distance1.text = "Gps not enable"
+
+            if (!checkPermissions()) {
+                requestPermissions()
+            } else {
+                enableLoc()
+                if (locationFromprefs == "")
+                    tv_distance1.text = "Gps not enable"
+            }
+
         } else {
 
-            tv_distance1.text = locationFromprefs
+            if (!checkPermissions()) {
+                requestPermissions()
+            } else {
+                tv_distance1.text = locationFromprefs
+                mService?.requestLocationUpdates()
+            }
+
+           
+
 
         }
 
@@ -278,9 +422,14 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
         onNewIntent(intent)
         this.setFinishOnTouchOutside(true)
 
+        // Check that the user hasn't revoked permissions by going to Settings.
+        if (Utils.requestingLocationUpdates(this)) {
+            if (!checkPermissions()) {
+                requestPermissions()
+            }
+        }
 
-
-        startService(Intent(this@details_map_activity, LocationService::class.java))
+        //startService(Intent(this@details_map_activity, LocationService::class.java))
 
 
 
@@ -321,16 +470,43 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
         return rad * 180.0 / Math.PI
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onStart() {
+        super.onStart()
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, IntentFilter("getlocation"))
+        // Bind to the service. If the service is in foreground mode, this signals to the service
+        // that since this activity is in the foreground, the service can exit foreground mode.
+
+        bindService(Intent(this, LocationUpdatesService::class.java), mServiceConnection,
+                Context.BIND_AUTO_CREATE)
+
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver)
+
+
+    override fun onResume() {
+        super.onResume()
+        LocalBroadcastManager.getInstance(this).registerReceiver(myReciever,
+                IntentFilter(LocationUpdatesService.ACTION_BROADCAST))
+
+//        LocalBroadcastManager.getInstance(this).registerReceiver(
+//                mMessageReceiver, IntentFilter("getlocation"))
+    }
+
+    override fun onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(myReciever)
+        super.onPause()
+    }
+
+    override fun onStop() {
+
+        if (mBound) {
+            // Unbind from the service. This signals to the service that this activity is no longer
+            // in the foreground, and the service can respond by promoting itself to a foreground
+            // service.
+            unbindService(mServiceConnection)
+            mBound = false
+        }
+        super.onStop()
     }
 
     private fun hasGPSDevice(context: Context): Boolean {
@@ -351,14 +527,14 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
                         }
 
                         override fun onConnectionSuspended(i: Int) {
-                            googleApiClient!!.connect()
+                            googleApiClient?.connect()
                         }
                     })
                     .addOnConnectionFailedListener { connectionResult -> Log.d("Location error", "Location error " + connectionResult.errorCode) }.build()
             googleApiClient?.connect()
 
             val locationRequest = LocationRequest.create()
-            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            locationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
             locationRequest.interval = (30 * 1000).toLong()
             locationRequest.fastestInterval = (5 * 1000).toLong()
             val builder = LocationSettingsRequest.Builder()
@@ -400,6 +576,8 @@ class details_map_activity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
             }
+
+            mService?.requestLocationUpdates()
         }
     }
 
