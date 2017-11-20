@@ -2,29 +2,24 @@ package com.yamamz.earthquakemonitor.adapter
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.graphics.Color
-import android.support.v7.content.res.AppCompatResources
 import android.support.v7.widget.RecyclerView
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.yamamz.earthquakemonitor.MainActivity
+import com.yamamz.earthquakemonitor.mainMVP.MainActivity
 
 import com.yamamz.earthquakemonitor.R
 import com.yamamz.earthquakemonitor.model.EarthQuake
-import com.yamamz.earthquakemonitor.model.Feature
-import android.text.method.TextKeyListener.clear
-
 
 
 /**
  * Created by AMRI on 8/25/2017.
  */
 
-class QuakeAdapter(private val context: Context, private val earthquakes: ArrayList<EarthQuake>) : RecyclerView.Adapter<QuakeAdapter.myViewHolder>() {
+open class QuakeAdapter(private val context: Context, private val earthquakes: ArrayList<EarthQuake>) : RecyclerView.Adapter<QuakeAdapter.myViewHolder>() {
 
     private val mBackground: Int
 
@@ -77,7 +72,7 @@ class QuakeAdapter(private val context: Context, private val earthquakes: ArrayL
         holder.tv_dept.text =  "Depth $dept km"
 
         holder.mView.setOnClickListener {
-            (context as MainActivity).goTodetails(position)
+            (context as MainActivity).goToDetailsMap(position)
         }
 
     }

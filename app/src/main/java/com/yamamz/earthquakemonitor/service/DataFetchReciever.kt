@@ -25,7 +25,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 
-import com.yamamz.earthquakemonitor.MainActivity
+import com.yamamz.earthquakemonitor.mainMVP.MainActivity
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.async
 
@@ -39,7 +39,7 @@ class DataFetchReciever : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
 try {
     async (CommonPool) {
-        getQuakesOnRefresh(context, intent)
+        getQuakesOnRefresh(context)
     }
     intentToRepeat = Intent(context, MainActivity::class.java)
 
@@ -52,7 +52,7 @@ catch (ignore:Exception){
 
     }
 
-    private fun getQuakesOnRefresh(context:Context,intent:Intent){
+    private fun getQuakesOnRefresh(context: Context){
         val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context)
         val earthquake_category = sharedPrefs.getString("earthquake_category", "all")
         val time_category = sharedPrefs.getString("time_category", "day")
@@ -63,7 +63,6 @@ catch (ignore:Exception){
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
         val apiServices = retrofit.create(ApiServices::class.java)
-
 
         var call: Call<EarthquakeGeoJSon>?=null
         when(earthquake_category){
@@ -135,9 +134,7 @@ catch (ignore:Exception){
             override fun onResponse(call: Call<EarthquakeGeoJSon>?, response: Response<EarthquakeGeoJSon>?) {
                 earthQuakes =response?.body()?.features
 
-
-
-                if(earthQuakes?.isNotEmpty()==true){
+                if (earthQuakes?.isNotEmpty()==true) {
                     Log.e("Yamamz","the query is successful")
                     Realm.init(context)
                     val realm = Realm.getDefaultInstance()

@@ -183,60 +183,6 @@ class AllEarthquakeActivity : AppCompatActivity(), OnMapReadyCallback{
 
     }
 
-
-//    private  class DownloadGeoJsonFile(context: AllEarthquakeActivity) : AsyncTask<String, Void, GeoJsonLayer>() {
-//
-//        private var activityReference: WeakReference<AllEarthquakeActivity>? = null
-//
-//
-//        override fun doInBackground(vararg params: String): GeoJsonLayer? {
-//
-//
-//            try {
-//                // Open a stream from the URL
-//                val stream = URL(params[0]).openStream()
-//
-//
-//                val result = StringBuilder()
-//                val reader = BufferedReader(InputStreamReader(stream) as Reader?)
-//                var line : String?
-//                do {
-//                    line = reader.readLine()
-//                    if (line == null)
-//                        break
-//                    result.append(line)
-//                } while (true)
-//                // Close the stream
-//                reader.close()
-//                stream.close()
-//                val activity = activityReference?.get()
-//                if (activity != null)
-//                return GeoJsonLayer(activity.mMap, JSONObject(result.toString()))
-//
-//
-//            } catch (e: IOException) {
-//                Log.e("Yamamz", "GeoJSON file could not be read")
-//            } catch (e: JSONException) {
-//                Log.e("yamamz", "GeoJSON file could not be converted to a JSONObject")
-//            }
-//
-//            return null
-//        }
-//
-//        override fun onPostExecute(layer: GeoJsonLayer?) {
-//            if (layer != null) {
-//                val activity = activityReference?.get()
-//                if (activity != null)
-//                activity.addGeoJsonLayerToMap(layer)
-//            }
-//        }
-//
-//        init {
-//            activityReference = WeakReference(context)
-//        }
-//
-//    }
-
     private fun addGeoJsonLayerToMap(layer: GeoJsonLayer) {
 
         addColorsToMarkers(layer)

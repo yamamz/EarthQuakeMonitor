@@ -4,6 +4,7 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import com.yamamz.earthquakemonitor.mainMVP.MainActivity
 import io.realm.Realm
 import io.realm.RealmConfiguration
 
@@ -21,9 +22,9 @@ var realm:Realm?=null
             realm?.close()
         } catch (e:Exception){}
 
-        Handler().postDelayed(Runnable {
+        Handler().postDelayed({
 
-            val intent= Intent(SplashActivity@this,MainActivity::class.java)
+            val intent= Intent(SplashActivity@this, MainActivity::class.java)
 
             startActivity(intent)
 

@@ -3,6 +3,7 @@
     <PreferenceCategory
         android:title="Set Earthquake and Time Range Category"
         android:key="quake_category">
+
         <ListPreference
             android:key="earthquake_category"
             android:title="Earthquake Category"
@@ -21,17 +22,21 @@
             android:entryValues="@array/time_category_values"
             />
 
+        <ListPreference
+            android:key="distance"
+            android:title="Distance to Notify me"
+            android:summary="%s"
+            android:defaultValue="200"
+            android:entries="@array/distance_category"
+            android:entryValues="@array/distance_category_values"
+            />
+
         <EditTextPreference
             android:enabled="false"
             android:visibility="invisible"
             android:key="location"
             />
 
-
-
     </PreferenceCategory>
-
-
-
 
 </PreferenceScreen>

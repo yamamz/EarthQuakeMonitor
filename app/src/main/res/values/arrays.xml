@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="distance_category_values">
+        <item name="lessThan100">100</item>
+        <item name="lessThan200">200</item>
+        <item name="lessThan300">300</item>
+        <item name="lessThan400">400</item>
+        <item name="lessThan500">500</item>
+        <item name="lessThan500">600</item>
+    </string-array>
+
+    <string-array name="distance_category">
+        <item name="lessThan100">less than 100 Km</item>
+        <item name="lessThan200">less than 200 km</item>
+        <item name="lessThan300">less than 300 km</item>
+        <item name="lessThan400">less than 400 km</item>
+        <item name="lessThan500">less than 500 km</item>
+        <item name="lessThan500">less than 600 km</item>
+    </string-array>
+
     <string-array name="eathquake_category">
         <item name="1plus">M1+ Earthquakes</item>
         <item name="2plus">M2.5+ Earthquakes</item>
@@ -7,7 +25,6 @@
         <item name="all">All Earthquakes</item>
         <item name="significant">Significant Earthquakes</item>
     </string-array>
-
     <string-array name="eathquake_category_values">
         <item name="1plus">one</item>
         <item name="2plus">two</item>
@@ -15,6 +32,7 @@
         <item name="all">all</item>
         <item name="significant">significant</item>
     </string-array>
+
 
     <string-array name="time_category">
         <item name="hour">past hour</item>
