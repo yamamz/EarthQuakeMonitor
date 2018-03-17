@@ -10,7 +10,14 @@ import io.realm.RealmConfiguration
 
 class SplashActivity : AppCompatActivity() {
 var realm:Realm?=null
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
+
+
+
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main3)
         try {

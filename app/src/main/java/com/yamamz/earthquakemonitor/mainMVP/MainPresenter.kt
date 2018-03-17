@@ -82,13 +82,7 @@ class MainPresenter(var view: MainMVP.View):MainMVP.Presenter{
        }
 
     val interactor=MainInteractor(this)
-
     override fun SetRecyclerViewDataOnClick(earthquake_category: String, time_category: String) {
     interactor.getEarthquakes(earthquake_category,time_category)
     }
-
-
-
-
-
 }

@@ -1,5 +1,6 @@
 package com.yamamz.earthquakemonitor.mainMVP
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlarmManager
@@ -8,9 +9,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.support.design.widget.Snackbar
+import android.support.v4.app.ActivityCompat
 
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.app.AlertDialog
@@ -25,12 +30,12 @@ import android.view.View
 
 import android.widget.Toast
 import com.yamamz.earthquakemonitor.AllEarthquakeActivity
+import com.yamamz.earthquakemonitor.BuildConfig
 
 import com.yamamz.earthquakemonitor.adapter.QuakeAdapter
 import com.yamamz.earthquakemonitor.model.*
 import com.yamamz.earthquakemonitor.R
-import com.yamamz.earthquakemonitor.Details_map_activity
-import com.yamamz.earthquakemonitor.MyApplication
+import com.yamamz.earthquakemonitor.details_map_MVP.Details_map_activity
 
 import com.yamamz.earthquakemonitor.service.DataFetchReciever
 import com.yamamz.earthquakemonitor.service.NotificationReceiver
@@ -54,6 +59,7 @@ class MainActivity : AppCompatActivity(), MainMVP.View {
     var mAdapter: QuakeAdapter? = null
     val presenter: MainPresenter = MainPresenter(this)
     var alarmIntent: Intent? = null
+    private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
 
 
     override fun setEarthquakeOnList(earthquakeList: ArrayList<EarthQuake>) {
@@ -69,6 +75,10 @@ class MainActivity : AppCompatActivity(), MainMVP.View {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+
+        if (!checkPermissions()) {
+            requestPermissions()
+        }
 
         presenter.getPrefs()
         presenter.loadataFromRealm()
@@ -272,6 +282,75 @@ class MainActivity : AppCompatActivity(), MainMVP.View {
 
     override fun goToDetailsMap(position: Int) {
         presenter.goToDeatails(position)
+    }
+
+
+    private fun requestPermissions() {
+        val shouldProvideRationale = ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+
+        // Provide an additional rationale to the user. This would happen if the user denied the
+        // request previously, but didn't check the "Don't ask again" checkbox.
+        if (shouldProvideRationale) {
+            Log.i("YAMAMZ", "Displaying permission rationale to provide additional context.")
+            Snackbar.make(
+                    findViewById(R.id.coordinator),
+                    R.string.permission_rationale,
+                    Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.ok) {
+                        // Request permission
+                        ActivityCompat.requestPermissions(this@MainActivity,
+                                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                                REQUEST_PERMISSIONS_REQUEST_CODE)
+                    }
+                    .show()
+        } else {
+            Log.i("Yamamz", "Requesting permission")
+            // Request permission. It's possible this can be auto answered if device policy
+            // sets the permission in a given state or the user denied the permission
+            // previously and checked "Never ask again".
+            ActivityCompat.requestPermissions(this@MainActivity,
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    REQUEST_PERMISSIONS_REQUEST_CODE)
+        }
+    }
+
+    private fun checkPermissions(): Boolean {
+        return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        Log.i("Yamamz", "onRequestPermissionResult")
+        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
+            if (grantResults.isEmpty()) {
+                // If user interaction was interrupted, the permission request is cancelled and you
+                // receive empty arrays.
+                Log.i("Yamamz", "User interaction was cancelled.")
+            } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission was granted.
+                //mService?.requestLocationUpdates()
+            } else {
+                // Permission denied.
+                // setButtonsState(false)
+                Snackbar.make(
+                        findViewById(R.id.coordinator),
+                        R.string.permission_denied_explanation,
+                        Snackbar.LENGTH_INDEFINITE)
+                        .setAction(R.string.settings) {
+                            // Build intent that displays the App settings screen.
+                            val intent = Intent()
+                            intent.action = android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            val uri = Uri.fromParts("package",
+                                    BuildConfig.APPLICATION_ID, null)
+                            intent.data = uri
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            startActivity(intent)
+                        }
+                        .show()
+            }
+        }
     }
 }
 

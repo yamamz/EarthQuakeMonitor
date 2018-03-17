@@ -1,14 +1,10 @@
 package com.yamamz.earthquakemonitor.mainMVP
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.Intent
-import android.preference.PreferenceManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import com.yamamz.earthquakemonitor.adapter.QuakeAdapter
 import com.yamamz.earthquakemonitor.api.ApiServices
-import com.yamamz.earthquakemonitor.Details_map_activity
 import com.yamamz.earthquakemonitor.MyApplication
 import com.yamamz.earthquakemonitor.model.EarthQuake
 import com.yamamz.earthquakemonitor.model.EarthquakeGeoJSon

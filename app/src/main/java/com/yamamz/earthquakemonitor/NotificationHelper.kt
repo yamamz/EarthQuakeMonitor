@@ -4,11 +4,17 @@ package com.yamamz.earthquakemonitor
  * Created by Raymundo T. Melecio on 9/5/2017.
  */
 
+import android.annotation.TargetApi
 import android.app.AlarmManager
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
 import android.preference.PreferenceManager
 import android.support.v4.app.NotificationCompat
 import android.util.Log
@@ -31,31 +37,12 @@ import kotlin.collections.ArrayList
  */
 
 object NotificationHelper {
-    var ALARM_TYPE_RTC = 100
-    private var alarmManagerRTC: AlarmManager? = null
-    private var alarmIntentRTC: PendingIntent? = null
-
-    var ALARM_TYPE_ELAPSED = 101
-    private var alarmManagerElapsed: AlarmManager? = null
-    private var alarmIntentElapsed: PendingIntent? = null
-
+    private const val CHANNEL_ID_EARTH = "Earthquake_app_id"
+    private const val CHANNEL_NAME_EARTH = "Earthquake_app"
+    private const val EARTH_ID = 0
     var earthQuakes: ArrayList<Feature>? = null
-
     private var pendingIntent: PendingIntent? = null
-
     var metadata: Metadata? = null
-
-    fun cancelAlarmRTC() {
-        if (alarmManagerRTC != null) {
-            alarmManagerRTC?.cancel(alarmIntentRTC)
-        }
-    }
-
-    fun cancelAlarmElapsed() {
-        if (alarmManagerElapsed != null) {
-            alarmManagerElapsed?.cancel(alarmIntentElapsed)
-        }
-    }
 
     fun getNotificationManager(context: Context): NotificationManager {
         return context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -85,18 +72,17 @@ object NotificationHelper {
                 //query to server successfull with data
                 if (earthQuakes?.isNotEmpty() == true) {
                     Log.e("YamamzNotification", "not empty")
-                    setnotify(earthQuakes, context, intentToRepeat)
+                    setNotify(earthQuakes, context, intentToRepeat)
 
 
                         val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context)
-                        val location= sharedPrefs.getString("location", "0,0")
+                        val lat= sharedPrefs.getString("lat", "0.0")
+                    val lon= sharedPrefs.getString("lon", "0.0")
                         val distancePrefs=sharedPrefs.getString("distance", "200")
-                    if(location!="0,0") {
-                        val latlon = location.split(",").toList()
-                        val mylat = latlon[0].toDouble()
-                        val myLon = latlon[1].toDouble()
+                    if(lat!="0.0" && lon !="0.0") {
+
                         // Log.e("Yamamz","test")
-                        setnotifyNearMe(earthQuakes, context, intentToRepeat, mylat, myLon,distancePrefs)
+                        setNotifyNearMe(earthQuakes, context, intentToRepeat, lat.toDouble(), lon.toDouble(),distancePrefs)
 
                     }
                 }
@@ -124,7 +110,7 @@ object NotificationHelper {
     }
 
 
-    fun setnotifyNearMe(earthQuakes: ArrayList<Feature>?, context: Context, intentToRepeat: Intent?, mylat: Double?, myLon: Double?, distancePrefs: String) {
+    fun setNotifyNearMe(earthQuakes: ArrayList<Feature>?, context: Context, intentToRepeat: Intent?, mylat: Double?, myLon: Double?, distancePrefs: String) {
         Realm.init(context)
         val realm = Realm.getDefaultInstance()
         try {
@@ -154,10 +140,17 @@ object NotificationHelper {
                                 //Pending intent to handle launch of Activity in intent above
                                 pendingIntent = PendingIntent.getActivity(context, requestCode, intentToRepeat, PendingIntent.FLAG_UPDATE_CURRENT)
                                 //Build notification
-                                val repeatedNotification = buildLocalNotification(context,
-                                        pendingIntent!!, e.properties?.mag ?: 0.0, e.properties?.place ?: "").build()
+                                val repeatedNotification = getBasicNotificationBuilder(context,
+                                        pendingIntent!!, e.properties?.mag ?: 0.0, e.properties?.place ?: "", CHANNEL_ID_EARTH,true).build()
                                 //Send local notification
-                                NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
+
+
+                            val nManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                            nManager.createNotificationChannel(CHANNEL_ID_EARTH, CHANNEL_NAME_EARTH, true)
+
+                            nManager.notify(notId, repeatedNotification)
+
+                                //NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
                                 //create notification object
                                 val notification = Notification(e.id.toString())
                                 //save the notification object to realm database
@@ -177,14 +170,14 @@ object NotificationHelper {
         }
     }
 
-    fun setnotify(earthQuakes: ArrayList<Feature>?, context: Context, intentToRepeat: Intent?) {
+    fun setNotify(earthQuakes: ArrayList<Feature>?, context: Context, intentToRepeat: Intent?) {
         Realm.init(context)
         val realm = Realm.getDefaultInstance()
         try {
             realm?.executeTransactionAsync(Realm.Transaction { realmAsync ->
                 val realmResult: RealmResults<Notification>? = realmAsync?.where(Notification::class.java)?.findAll()
                 val i = 0
-                earthQuakes?.filter { it.properties?.mag != null && it.properties?.mag ?: 0.0 >= 6 }?.forEach { e ->
+                earthQuakes?.filter { it.properties?.mag != null && it.properties?.mag ?: 0.0 >= 4 }?.forEach { e ->
                     //loop the result and find if the eathquake id is not in notification database
                     if (realmResult?.none { it.notificationID == e.id } == true) {
                         val requestCode = ("someString" + System.currentTimeMillis()).hashCode()
@@ -202,10 +195,18 @@ object NotificationHelper {
                         //Pending intent to handle launch of Activity in intent above
                         pendingIntent = PendingIntent.getActivity(context, requestCode, intentToRepeat, PendingIntent.FLAG_UPDATE_CURRENT)
                         //Build notification
-                        val repeatedNotification = buildLocalNotification(context,
-                                pendingIntent!!, e.properties?.mag ?: 0.0, e.properties?.place ?: "").build()
+                        val repeatedNotification = getBasicNotificationBuilder(context,
+                                pendingIntent!!, e.properties?.mag ?: 0.0, e.properties?.place ?: "", CHANNEL_ID_EARTH,true).build()
                         //Send local notification
-                        NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
+                        val nManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        nManager.createNotificationChannel(CHANNEL_ID_EARTH, CHANNEL_NAME_EARTH, true)
+
+                        nManager.notify(notId, repeatedNotification)
+
+
+
+
+                        //NotificationHelper.getNotificationManager(context).notify(notId, repeatedNotification)
                         //create notification object
                         val notification = Notification(e.id.toString())
                         //save the notification object to realm database
@@ -228,15 +229,46 @@ object NotificationHelper {
     /**
      * Buld notification for earthquakes
      */
-    private fun buildLocalNotification(context: Context, pendingIntent: PendingIntent, mag: Double, place: String): NotificationCompat.Builder {
-        return NotificationCompat.Builder(context, "channel_id")
-                .setContentIntent(pendingIntent)
+//    private fun buildLocalNotification(context: Context, pendingIntent: PendingIntent, mag: Double, place: String): NotificationCompat.Builder {
+//        return NotificationCompat.Builder(context, "channel_id")
+//                .setContentIntent(pendingIntent)
+//                .setSmallIcon(R.mipmap.iconearth)
+//                .setStyle(NotificationCompat.BigTextStyle())
+//                .setColorized(true)
+//                .setContentTitle("Mag-$mag")
+//                .setContentInfo(place)
+//                .setAutoCancel(true) as NotificationCompat.Builder
+//    }
+//
+
+
+    private fun getBasicNotificationBuilder(context: Context,pendingIntent: PendingIntent, mag: Double, place: String, channelId: String, playSound: Boolean)
+            : NotificationCompat.Builder{
+        val notificationSound: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val nBuilder = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.mipmap.iconearth)
-                .setStyle(NotificationCompat.BigTextStyle())
-                .setColorized(true)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
                 .setContentTitle("Mag-$mag")
                 .setContentInfo(place)
-                .setAutoCancel(true) as NotificationCompat.Builder
+                .setDefaults(0)
+        if (playSound) nBuilder.setSound(notificationSound)
+        return nBuilder
+    }
+
+
+    @TargetApi(26)
+    private fun NotificationManager.createNotificationChannel(channelID: String,
+                                                              channelName: String,
+                                                              playSound: Boolean){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            val channelImportance = if (playSound) NotificationManager.IMPORTANCE_DEFAULT
+            else NotificationManager.IMPORTANCE_LOW
+            val nChannel = NotificationChannel(channelID, channelName, channelImportance)
+            nChannel.enableLights(true)
+            nChannel.lightColor = Color.BLUE
+            this.createNotificationChannel(nChannel)
+        }
     }
 
 }

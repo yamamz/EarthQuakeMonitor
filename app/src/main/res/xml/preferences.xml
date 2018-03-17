@@ -32,9 +32,18 @@
             />
 
         <EditTextPreference
+            android:clickable="false"
             android:enabled="false"
             android:visibility="invisible"
-            android:key="location"
+            android:key="lat"
+            android:defaultValue="0.0"
+            />
+        <EditTextPreference
+            android:clickable="false"
+            android:enabled="false"
+            android:visibility="invisible"
+            android:key="lon"
+            android:defaultValue="0.0"
             />
 
     </PreferenceCategory>

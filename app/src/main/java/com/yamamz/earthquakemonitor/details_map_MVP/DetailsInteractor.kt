@@ -11,7 +11,7 @@ import java.util.*
  * Created by AMRI on 11/9/2017.
  */
 class DetailsInteractor(val presenter: DetailsMVP.Presenter):DetailsMVP.Interactor{
-    override fun checkProvideEnable(providerEnabled: Boolean, hasGPS: Boolean, checkPermissions: Boolean, shouldProvideRationale: Boolean) {
+    override fun checkProvideEnable(providerEnabled: Boolean, hasGPS: Boolean) {
 
 
 
@@ -21,7 +21,6 @@ class DetailsInteractor(val presenter: DetailsMVP.Presenter):DetailsMVP.Interact
 
         } else {
 
-               // presenter.displayDistance(getPrefs(), extras?.getDouble("n").toString().toDouble(), getPrefs())
                 presenter.reLocationUpdate()
             }
 
@@ -34,42 +33,6 @@ class DetailsInteractor(val presenter: DetailsMVP.Presenter):DetailsMVP.Interact
         }
     }
 
-    private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
-    override fun RequestPermissionResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        Log.i("Yamamz", "onRequestPermissionResult")
-        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
-            if (grantResults.isEmpty()) {
-                // If user interaction was interrupted, the permission request is cancelled and you
-                // receive empty arrays.
-                Log.i("Yamamz", "User interaction was cancelled.")
-            } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission was granted.
-
-                presenter.reLocationUpdate()
-
-            } else {
-                // Permission denied.
-                // setButtonsState(false)
-                presenter.showSnackBarIfDenied()
-
-
-            }
-        }
-
-    }
-
-    override fun requestPermission(shouldProvideRationale: Boolean) {
-        if (shouldProvideRationale) {
-            Log.i("YAMAMZ", "Displaying permission rationale to provide additional context.")
-            presenter.showSnackBar()
-        } else {
-            Log.i("Yamamz", "Requesting permission")
-            // Request permission. It's possible this can be auto answered if device policy
-            // sets the permission in a given state or the user denied the permission
-            // previously and checked "Never ask again".
-          presenter.requestPermission()
-        }
-    }
 
     override fun setTextViews(magnitude: Double,e:String,n:String) {
         val lat: String?

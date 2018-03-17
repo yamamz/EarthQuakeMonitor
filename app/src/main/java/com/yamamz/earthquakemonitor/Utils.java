@@ -30,7 +30,6 @@ public class Utils {
 
     /**
      * Returns true if requesting location updates, otherwise returns false.
-     *
      * @param context The {@link Context}.
      */
     public static boolean requestingLocationUpdates(Context context) {
@@ -49,17 +48,4 @@ public class Utils {
                 .apply();
     }
 
-    /**
-     * Returns the {@code location} object as a human readable string.
-     * @param location  The {@link Location}.
-     */
-    public static String getLocationText(Location location) {
-        return location == null ? "Unknown location" :
-                "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
-    }
-
-    public static String getLocationTitle(Context context) {
-        return context.getString(R.string.location_updated,
-                DateFormat.getDateTimeInstance().format(new Date()));
-    }
 }

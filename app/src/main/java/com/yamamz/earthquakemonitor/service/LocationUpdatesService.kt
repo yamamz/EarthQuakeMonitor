@@ -16,10 +16,7 @@
 
 package com.yamamz.earthquakemonitor.service
 
-import android.app.ActivityManager
-import android.app.Notification
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -40,11 +37,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
-import com.yamamz.earthquakemonitor.R
 import com.yamamz.earthquakemonitor.Utils
-import com.yamamz.earthquakemonitor.Details_map_activity
 
 /**
  * A bound and started service that is promoted to a foreground service when location updates have
@@ -266,27 +259,6 @@ class LocationUpdatesService : Service() {
             get() = this@LocationUpdatesService
     }
 
-    /**
-     * Returns true if this is a foreground service.
-     *
-     * @param context The [Context].
-     */
-    fun serviceIsRunningInForeground(context: Context): Boolean {
-        val manager = context.getSystemService(
-                Context.ACTIVITY_SERVICE) as ActivityManager
-        if (manager != null) {
-            for (service in manager.getRunningServices(
-                    Integer.MAX_VALUE)) {
-                if (javaClass.name == service.service.className) {
-                    if (service.foreground) {
-                        return true
-                    }
-                }
-            }
-        }
-        return false
-    }
-
     companion object {
 
         private val PACKAGE_NAME = "com.yamamz.earthquakemonitor.service"
@@ -309,9 +281,5 @@ class LocationUpdatesService : Service() {
          */
         private val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = UPDATE_INTERVAL_IN_MILLISECONDS / 2
 
-        /**
-         * The identifier for the notification displayed for the foreground service.
-         */
-        private val NOTIFICATION_ID = 12345678
     }
 }

@@ -3,7 +3,6 @@ package com.yamamz.earthquakemonitor.details_map_MVP
 import android.graphics.Bitmap
 import android.util.Log
 import com.google.android.gms.maps.model.LatLng
-import java.util.*
 
 /**
  * Created by AMRI on 11/9/2017.
@@ -13,20 +12,20 @@ class DetailsPresenter(var view: DetailsMVP.View):DetailsMVP.Presenter{
         view.enableLoc()
     }
 
-    override fun checkIsProviderEnable(providerEnabled: Boolean, hasGPS: Boolean, checkPermissions: Boolean, shouldProvideRationale: Boolean) {
-        interactor.checkProvideEnable(providerEnabled,hasGPS,checkPermissions,shouldProvideRationale)
+    override fun checkIsProviderEnable(providerEnabled: Boolean, hasGPS: Boolean) {
+        interactor.checkProvideEnable(providerEnabled,hasGPS)
     }
 
     override fun hasGPSDevice(hasGPS: Boolean) {
         interactor.hasGPS(hasGPS)
     }
 
-    override fun displayDistance(lat: Double, lon: Double, prefs: String) {
+    override fun displayDistance(lat: Double, lon: Double, prefs: String, prefsLon: String) {
 
 
         val location= prefs.split(",").toList()
         Log.e("Yamamz", location.size.toString())
-        val distance=distance(location[0].toDouble(), location[1].toDouble(),lat,lon)
+        val distance=distance(prefs.toDouble(), prefsLon.toDouble(),lat,lon)
 
         view.setTextDistance(distance)
     }
@@ -49,29 +48,19 @@ class DetailsPresenter(var view: DetailsMVP.View):DetailsMVP.Presenter{
     }
 
 
-    override fun showSnackBarIfDenied() {
-        view.showSnackBarIfdenied()
-    }
 
     override fun reLocationUpdate() {
         view.startLocationUpdate()
     }
 
-    override fun RequestPermissionResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        interactor.RequestPermissionResult(requestCode,permissions,grantResults)
-    }
 
-    override fun requestPermission() {
-        view.requestPermissions()
-    }
+
 
     override fun showSnackBar() {
         view.showSnackBar()
     }
 
-    override fun requestPermissions() {
-        if(!view.checkPermissions()) interactor.requestPermission(view.shouldProvideRationale())
-    }
+
 
     override fun showMessage(s: String) {
         view.showMessage(s)

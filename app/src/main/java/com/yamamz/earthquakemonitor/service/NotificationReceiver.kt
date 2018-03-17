@@ -5,7 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.yamamz.earthquakemonitor.NotificationHelper
-import com.yamamz.earthquakemonitor.Details_map_activity
+import com.yamamz.earthquakemonitor.details_map_MVP.Details_map_activity
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.async
 

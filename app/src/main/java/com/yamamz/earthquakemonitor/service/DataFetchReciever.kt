@@ -28,8 +28,6 @@ import java.util.*
 import com.yamamz.earthquakemonitor.mainMVP.MainActivity
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.async
-
-
 class DataFetchReciever : BroadcastReceiver() {
     var earthQuakes: ArrayList<Feature>?=null
     var intentToRepeat:Intent?=null
@@ -180,7 +178,6 @@ catch (ignore:Exception){
         })
     }
 
-
     private fun sendBroadcast(intent: Intent,context:Context) {
 
         val handler = Handler(Looper.getMainLooper())
@@ -189,7 +186,5 @@ catch (ignore:Exception){
         }
 
     }
-
-
 
 }

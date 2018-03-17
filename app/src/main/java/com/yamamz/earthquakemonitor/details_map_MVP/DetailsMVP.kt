@@ -17,13 +17,11 @@ class DetailsMVP{
         fun addMarker(mDotMarkerBitmap: Bitmap,loc:LatLng)
         fun hasGPS():Boolean
         fun showMessage(s: String)
-        fun checkPermissions(): Boolean
-        fun requestPermissions()
-        fun shouldProvideRationale():Boolean
         fun showSnackBar()
         fun startLocationUpdate()
-        fun showSnackBarIfdenied()
-        fun getPrefs():String
+
+        fun getPrefsLat():String
+        fun getPrefsLon():String
         fun setTextDistance(distance: Double)
         fun enableLoc()
     }
@@ -38,15 +36,13 @@ class DetailsMVP{
         fun addMarker(mDotMarkerBitmap: Bitmap, loc: LatLng)
         fun hasGPS()
         fun showMessage(s: String)
-        fun requestPermissions()
         fun showSnackBar()
-        fun requestPermission()
-        fun RequestPermissionResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray)
+
         fun reLocationUpdate()
-        fun showSnackBarIfDenied()
-        fun displayDistance(lat: Double, lon: Double, prefs: String)
+
+        fun displayDistance(lat: Double, lon: Double, prefs: String, prefsLon: String)
         fun hasGPSDevice(hasGPS: Boolean)
-        fun checkIsProviderEnable(providerEnabled: Boolean, hasGPS: Boolean, checkPermissions: Boolean, shouldProvideRationale: Boolean)
+        fun checkIsProviderEnable(providerEnabled: Boolean, hasGPS: Boolean)
         fun enableLoc()
 
     }
@@ -54,10 +50,8 @@ class DetailsMVP{
     interface Interactor{
         fun getTimeofTheDay()
         fun setTextViews(magnitude: Double,e:String,n:String)
-        fun requestPermission(shouldProvideRationale: Boolean)
-        fun RequestPermissionResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray)
-        fun hasGPS(hasGPS: Boolean)
-        fun checkProvideEnable(providerEnabled: Boolean, hasGPS: Boolean, checkPermissions: Boolean, shouldProvideRationale: Boolean)
+          fun hasGPS(hasGPS: Boolean)
+        fun checkProvideEnable(providerEnabled: Boolean, hasGPS: Boolean)
 
     }
 }
