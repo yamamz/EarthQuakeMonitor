@@ -177,7 +177,7 @@ object NotificationHelper {
             realm?.executeTransactionAsync(Realm.Transaction { realmAsync ->
                 val realmResult: RealmResults<Notification>? = realmAsync?.where(Notification::class.java)?.findAll()
                 val i = 0
-                earthQuakes?.filter { it.properties?.mag != null && it.properties?.mag ?: 0.0 >= 4 }?.forEach { e ->
+                earthQuakes?.filter { it.properties?.mag != null && it.properties?.mag ?: 0.0 >= 6 }?.forEach { e ->
                     //loop the result and find if the eathquake id is not in notification database
                     if (realmResult?.none { it.notificationID == e.id } == true) {
                         val requestCode = ("someString" + System.currentTimeMillis()).hashCode()
@@ -200,7 +200,6 @@ object NotificationHelper {
                         //Send local notification
                         val nManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                         nManager.createNotificationChannel(CHANNEL_ID_EARTH, CHANNEL_NAME_EARTH, true)
-
                         nManager.notify(notId, repeatedNotification)
 
 

@@ -31,20 +31,6 @@
             android:entryValues="@array/distance_category_values"
             />
 
-        <EditTextPreference
-            android:clickable="false"
-            android:enabled="false"
-            android:visibility="invisible"
-            android:key="lat"
-            android:defaultValue="0.0"
-            />
-        <EditTextPreference
-            android:clickable="false"
-            android:enabled="false"
-            android:visibility="invisible"
-            android:key="lon"
-            android:defaultValue="0.0"
-            />
 
     </PreferenceCategory>
 
